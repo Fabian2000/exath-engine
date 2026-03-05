@@ -42,7 +42,7 @@ impl Session {
 
         if let Some((name, params, body_str)) = split_fn_def(line) {
             let body_ast = crate::ast::parse_str(body_str)?;
-            self.fns.insert(name.to_lowercase(), (params, body_ast));
+            self.fns.insert(name.to_string(), (params, body_ast));
             return Ok(CalcResult::Real(0.0));
         }
 
@@ -97,7 +97,7 @@ impl Session {
 
     /// Remove a user-defined function.
     pub fn remove_fn(&mut self, name: &str) {
-        self.fns.remove(&name.to_lowercase());
+        self.fns.remove(name);
     }
 }
 

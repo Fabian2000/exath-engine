@@ -254,8 +254,10 @@ pub(crate) fn tokenize(input: &str) -> Result<Vec<Token>, ExathError> {
                         pos += 1;
                     }
                     tokens.push(Token::Ident(format!("log:{}", base_str)));
-                } else {
+                } else if is_keyword(&lower) {
                     tokens.push(Token::Ident(lower));
+                } else {
+                    tokens.push(Token::Ident(name));
                 }
             }
 
@@ -274,4 +276,22 @@ pub(crate) fn tokenize(input: &str) -> Result<Vec<Token>, ExathError> {
         }
     }
     Ok(tokens)
+}
+
+/// Check if a lowercase name is a builtin function, constant, or keyword.
+fn is_keyword(name: &str) -> bool {
+    matches!(
+        name,
+        "sin"  | "cos"  | "tan"  | "cot"  | "sec"  | "csc"  |
+        "asin" | "acos" | "atan" | "acot" | "asec" | "acsc" |
+        "sinh"  | "cosh"  | "tanh"  | "coth"  | "sech"  | "csch" |
+        "asinh" | "acosh" | "atanh" | "acoth" | "asech" | "acsch" |
+        "ln" | "lg" | "log" | "exp" |
+        "sqrt" | "cbrt" | "abs" | "nthroot" |
+        "floor" | "ceil" | "round" | "trunc" | "frac" |
+        "sign" | "sgn" | "arg" | "conj" | "real" | "imag" |
+        "deg" | "rad" |
+        "if" | "min" | "max" | "clamp" | "gcd" | "lcm" | "mod" |
+        "e" | "pi" | "phi" | "i" | "x"
+    )
 }
