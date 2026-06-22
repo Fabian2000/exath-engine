@@ -293,6 +293,14 @@ pub extern "C" fn exath_session_fn_names(session: *mut ExathSession) -> *mut c_c
     to_c_string(&names.join(",")).into_raw()
 }
 
+/// Returns a null-terminated, comma-separated list of variable names.
+/// Free the result with exath_free_string().
+#[no_mangle]
+pub extern "C" fn exath_session_var_names(session: *mut ExathSession) -> *mut c_char {
+    let names = unsafe { (*session).0.var_names() };
+    to_c_string(&names.join(",")).into_raw()
+}
+
 // ── Internal helpers ──────────────────────────────────────────────────────────
 
 fn parse_cstr<'a>(ptr: *const c_char) -> Result<&'a str, String> {

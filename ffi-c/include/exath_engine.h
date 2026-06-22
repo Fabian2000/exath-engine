@@ -40,7 +40,7 @@ typedef struct ExathResult {
 /**
  * Free an error_msg string returned by any exath function.
  */
-void exath_free_string(char *s);
+void exath_free_string(char *ptr);
 
 /**
  * Evaluate an expression string.
@@ -124,5 +124,22 @@ void exath_session_remove_var(struct ExathSession *session, const char *name);
  * Clear all variables in the session.
  */
 void exath_session_clear_vars(struct ExathSession *session);
+
+/**
+ * Remove a user-defined function from the session.
+ */
+void exath_session_remove_fn(struct ExathSession *session, const char *name);
+
+/**
+ * Returns a null-terminated, comma-separated list of user-defined function names.
+ * Free the result with exath_free_string().
+ */
+char *exath_session_fn_names(struct ExathSession *session);
+
+/**
+ * Returns a null-terminated, comma-separated list of variable names.
+ * Free the result with exath_free_string().
+ */
+char *exath_session_var_names(struct ExathSession *session);
 
 #endif  /* EXATH_ENGINE_H */
