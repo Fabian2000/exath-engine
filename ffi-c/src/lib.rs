@@ -1,6 +1,7 @@
 use exath_engine::{
     AngleMode, CalcResult, Session,
     evaluate_complex, is_valid, deriv, integrate, sum, prod,
+    differentiate, simplify_expr,
 };
 use std::ffi::{CStr, CString};
 use std::os::raw::c_char;
@@ -299,6 +300,40 @@ pub extern "C" fn exath_session_fn_names(session: *mut ExathSession) -> *mut c_c
 pub extern "C" fn exath_session_var_names(session: *mut ExathSession) -> *mut c_char {
     let names = unsafe { (*session).0.var_names() };
     to_c_string(&names.join(",")).into_raw()
+}
+
+// ── Symbolic ──────────────────────────────────────────────────────────────────
+
+/// Symbolically differentiate `expr` w.r.t. `var`. Returns the simplified
+/// derivative as a newly-allocated, NUL-terminated string (free with
+/// exath_free_string). Returns NULL on parse error or unsupported construct.
+#[no_mangle]
+pub extern "C" fn exath_differentiate(
+    expr: *const c_char,
+    var: *const c_char,
+) -> *mut c_char {
+    let (expr_str, var_str) = match (parse_cstr(expr), parse_cstr(var)) {
+        (Ok(e), Ok(v)) => (e, v),
+        _ => return std::ptr::null_mut(),
+    };
+    match differentiate(expr_str, var_str) {
+        Ok(s) => to_c_string(&s).into_raw(),
+        Err(_) => std::ptr::null_mut(),
+    }
+}
+
+/// Parse and algebraically simplify `expr`. Returns a newly-allocated string
+/// (free with exath_free_string), or NULL on parse error.
+#[no_mangle]
+pub extern "C" fn exath_simplify(expr: *const c_char) -> *mut c_char {
+    let expr_str = match parse_cstr(expr) {
+        Ok(e) => e,
+        Err(_) => return std::ptr::null_mut(),
+    };
+    match simplify_expr(expr_str) {
+        Ok(s) => to_c_string(&s).into_raw(),
+        Err(_) => std::ptr::null_mut(),
+    }
 }
 
 // ── Internal helpers ──────────────────────────────────────────────────────────

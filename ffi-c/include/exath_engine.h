@@ -142,4 +142,17 @@ char *exath_session_fn_names(struct ExathSession *session);
  */
 char *exath_session_var_names(struct ExathSession *session);
 
+/**
+ * Symbolically differentiate `expr` w.r.t. `var`. Returns the simplified
+ * derivative as a newly-allocated, NUL-terminated string (free with
+ * exath_free_string). Returns NULL on parse error or unsupported construct.
+ */
+char *exath_differentiate(const char *expr, const char *var);
+
+/**
+ * Parse and algebraically simplify `expr`. Returns a newly-allocated string
+ * (free with exath_free_string), or NULL on parse error.
+ */
+char *exath_simplify(const char *expr);
+
 #endif  /* EXATH_ENGINE_H */

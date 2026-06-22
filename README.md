@@ -33,6 +33,7 @@ engine/
 - **Multi-argument functions** — `if(cond, a, b)`, `min(...)`, `max(...)`, `clamp(x, lo, hi)`, `gcd(a, b)`, `lcm(a, b)`
 - **Comparison & logic operators** — `>`, `<`, `>=`, `<=`, `==`, `!=`, `&&`, `||`, `!`
 - **Numerical methods** — derivative, integral, sum, product
+- **Symbolic differentiation** — `differentiate(expr, var)` returns the simplified derivative as an expression
 - **AST access** — parse to an inspectable tree for tooling
 - **Three targets** — Rust, C shared library (with auto-generated header), WebAssembly
 

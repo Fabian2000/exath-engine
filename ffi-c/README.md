@@ -112,3 +112,13 @@ typedef struct {
 | `exath_free_string(s)` | Free any string returned by the API |
 
 All `char *` returns (error messages, function lists) must be freed with `exath_free_string()`.
+
+## Symbolic
+
+| Function | Description |
+| --- | --- |
+| `exath_differentiate(expr, var)` | Simplified symbolic derivative as a string (NULL on error) |
+| `exath_simplify(expr)` | Algebraically simplified expression as a string (NULL on error) |
+
+Both return a newly-allocated string — free it with `exath_free_string()`.
+Symbolic calculus is radian-based, independent of evaluation angle mode.

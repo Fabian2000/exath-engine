@@ -4,6 +4,7 @@ pub mod error;
 pub mod evaluator;
 pub mod analysis;
 pub mod numerics;
+pub mod symbolic;
 
 // ── Convenience re-exports ────────────────────────────────────────────────────
 
@@ -15,4 +16,5 @@ pub use evaluator::{
 };
 pub use analysis::{is_valid, supported_functions};
 pub use numerics::{deriv, integrate, sum, prod};
+pub use symbolic::{differentiate, simplify_expr};
 pub use ast::{Ast, BinOp, UserFns, parse_str};

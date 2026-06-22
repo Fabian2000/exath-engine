@@ -2,6 +2,7 @@ use exath_engine::{
     AngleMode, CalcResult, Session,
     evaluate_complex, is_valid, supported_functions,
     deriv, integrate, sum, prod,
+    differentiate, simplify_expr,
 };
 use wasm_bindgen::prelude::*;
 
@@ -261,4 +262,20 @@ impl ExathSession {
     pub fn remove_fn(&mut self, name: &str) {
         self.inner.remove_fn(name);
     }
+}
+
+// ── Symbolic ──────────────────────────────────────────────────────────────────
+
+/// Symbolically differentiate `expr` w.r.t. `variable`, returning the simplified
+/// derivative as an expression string. Throws on parse errors or unsupported
+/// constructs (factorial, comparisons, multi-argument functions, …).
+#[wasm_bindgen(js_name = differentiate)]
+pub fn js_differentiate(expr: &str, variable: &str) -> Result<String, JsValue> {
+    differentiate(expr, variable).map_err(|e| JsValue::from_str(&e.to_string()))
+}
+
+/// Parse and algebraically simplify `expr`, returning the result as a string.
+#[wasm_bindgen(js_name = simplify)]
+pub fn js_simplify(expr: &str) -> Result<String, JsValue> {
+    simplify_expr(expr).map_err(|e| JsValue::from_str(&e.to_string()))
 }

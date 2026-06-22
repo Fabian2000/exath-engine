@@ -143,3 +143,18 @@ Every function returns an `ExathResult` object:
 ### Angle mode
 
 Pass as string: `"rad"` (default), `"deg"`, or `"grad"`. Case-insensitive.
+
+## Symbolic
+
+```js
+import { differentiate, simplify } from "./pkg/exath_engine_wasm.js";
+
+differentiate("x^2", "x");          // "2 * x"
+differentiate("sin(x^2)", "x");     // "cos(x^2) * 2 * x"
+simplify("x + 0 + 1*x");            // "2 * x"  (where applicable)
+```
+
+`differentiate(expr, variable)` returns the simplified derivative as an
+expression string and throws on parse errors or unsupported constructs
+(factorial, comparisons, multi-argument functions). Symbolic calculus is
+radian-based, independent of the evaluation angle mode.
