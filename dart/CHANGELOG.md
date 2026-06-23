@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.3
+
+- Add a top-level `LICENSE` file (MIT; the package remains dual-licensed MIT OR
+  Apache-2.0 via `LICENSE-APACHE`) so pub.dev recognises the license.
+- Shorten the package description to satisfy pub.dev length guidance.
+
 ## 1.0.2
 
 - Fix: the WASM assets were missing from the published package (wasm-pack ships

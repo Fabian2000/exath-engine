@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name             = 'exath'
-  s.version          = '1.0.2'
+  s.version          = '1.0.3'
   s.summary          = 'exath engine (prebuilt native library)'
   s.homepage         = 'https://github.com/Fabian2000/exath-engine'
   s.license          = { :type => 'MIT OR Apache-2.0' }
