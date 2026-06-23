@@ -39,7 +39,6 @@ engine/
   gateway, so all three are identical
 - **Computer algebra**: `diff`, `simplify`, `expand`, `factor`, `solve`,
   `integral`, `taylor`, `limit`, `laplace`, `dsolve`, … all as `eval_line` forms
-- **AST access**: parse to an inspectable tree for tooling
 - **Four targets**: Rust crate, C shared library (with auto-generated header), WebAssembly, and a Dart / Flutter package
 
 ---
@@ -116,6 +115,20 @@ s.eval("g(x, y) = x * y + 3");
 console.log(s.eval("f(5)").re);       // 26
 console.log(s.eval("g(2, 4)").re);    // 11
 console.log(s.fnNames());             // ["f", "g"]
+```
+
+### Dart / Flutter
+
+See the [`dart/`](dart) package (native via `dart:ffi`, web via `js_interop`).
+
+```dart
+import 'package:exath/exath.dart';
+
+final s = ExathSession();
+print(s.eval('2^10 + sqrt(9)').re);        // 1027.0
+print(s.evalLine('diff(sin(x^2), x)'));    // 2 * x * cos(x^2)
+print(s.evalLine('factor(x^2 - 1, x)'));   // (x + 1) * (x - 1)
+s.dispose();
 ```
 
 ---
@@ -488,30 +501,6 @@ grad(x^2 + y^2, [x, y])      → [[2 * x], [2 * y]]
 odesolve(y, x, y, 0, 1, 1)   → 2.718…   (y' = y, y(0) = 1)
 minimize((x - 3)^2, x, 0, 10) → 3
 ```
-
----
-
-## AST access
-
-Parse an expression into an inspectable tree:
-
-```rust
-use exath_engine::parse_str;
-
-let ast = parse_str("x^2 + 1")?;
-println!("{:#?}", ast);
-// BinOp(
-//     Add,
-//     BinOp(
-//         Pow,
-//         Var("x"),
-//         Number(2.0),
-//     ),
-//     Number(1.0),
-// )
-```
-
-The `Ast` and `BinOp` enums are fully public and can be traversed for analysis, pretty-printing, or symbolic manipulation.
 
 ---
 
