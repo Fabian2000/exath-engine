@@ -40,7 +40,7 @@ engine/
 - **Computer algebra**: `diff`, `simplify`, `expand`, `factor`, `solve`,
   `integral`, `taylor`, `limit`, `laplace`, `dsolve`, … all as `eval_line` forms
 - **AST access**: parse to an inspectable tree for tooling
-- **Three targets**: Rust, C shared library (with auto-generated header), WebAssembly
+- **Four targets**: Rust crate, C shared library (with auto-generated header), WebAssembly, and a Dart / Flutter package
 
 ---
 
