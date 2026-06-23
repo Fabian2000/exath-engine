@@ -1,4 +1,4 @@
-# exath
+# exath_engine
 
 Flutter plugin for the [exath-engine](https://github.com/Fabian2000/exath-engine):
 a complex-native math expression evaluator with computer algebra (differentiation,
@@ -13,7 +13,7 @@ evaluation including the symbolic / matrix DSL via `evalLine`.
 ## Install
 
 ```bash
-flutter pub add exath
+flutter pub add exath_engine
 ```
 
 Supported platforms: **Android, iOS, macOS, Windows, Linux, and Web.** The
@@ -27,7 +27,7 @@ module on web and is a harmless no-op everywhere else, so the same code runs on
 all platforms:
 
 ```dart
-import 'package:exath/exath.dart';
+import 'package:exath_engine/exath_engine.dart';
 
 Future<void> main() async {
   await ensureInitialized();           // loads WASM on web; no-op elsewhere

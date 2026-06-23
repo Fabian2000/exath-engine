@@ -53,7 +53,7 @@ bool _ready = false;
 /// API on web; subsequent calls are no-ops. (No-op on native platforms.)
 Future<void> ensureInitialized() async {
   if (_ready) return;
-  const base = 'assets/packages/exath/assets/wasm';
+  const base = 'assets/packages/exath_engine/assets/wasm';
   final completer = Completer<void>();
   late final JSFunction listener;
   listener = ((web.Event _) {

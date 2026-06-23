@@ -1,29 +1,10 @@
 # Changelog
 
-## 1.0.3
-
-- Add a top-level `LICENSE` file (MIT; the package remains dual-licensed MIT OR
-  Apache-2.0 via `LICENSE-APACHE`) so pub.dev recognises the license.
-- Shorten the package description to satisfy pub.dev length guidance.
-
-## 1.0.2
-
-- Fix: the WASM assets were missing from the published package (wasm-pack ships
-  a `.gitignore` with `*` that pub honoured per-directory, dropping assets/wasm).
-  Web and any consumer build now resolve the bundled WASM correctly.
-
-## 1.0.1
-
-- First working release (1.0.0 was retracted before use). `exath` is now a
-  Flutter plugin: prebuilt native libraries bundled for Android, iOS, macOS,
-  Windows, Linux, and the WASM module for web. No Rust toolchain, no manual
-  setup. Call `await ensureInitialized()` once at startup (loads WASM on web,
-  no-op elsewhere).
-
 ## 1.0.0
 
-- Initial release: Dart/Flutter bindings for the exath-engine.
-- One eval gateway: `evaluate`, `isValid`, `supportedFunctions`, and
-  `ExathSession` with `eval` / `evalLine` (symbolic and matrix forms),
-  variable and user-function management.
-- Native backend via `dart:ffi` (C ABI); web backend via `js_interop` (WASM).
+- First release of `exath_engine`: a Flutter plugin for the
+  [exath-engine](https://github.com/Fabian2000/exath-engine), a complex-native
+  math evaluator with a computer-algebra core. Prebuilt native libraries are
+  bundled for Android, iOS, macOS, Windows, and Linux, and the WASM module is
+  bundled for web. Call `await ensureInitialized()` once at startup (loads the
+  WASM module on web, no-op elsewhere).

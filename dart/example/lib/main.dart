@@ -1,4 +1,4 @@
-import 'package:exath/exath.dart';
+import 'package:exath_engine/exath_engine.dart';
 import 'package:flutter/material.dart';
 
 void main() => runApp(const ExathApp());
