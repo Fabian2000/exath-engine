@@ -15,6 +15,9 @@ topics:
 environment:
   sdk: ">=3.3.0 <4.0.0"
 
+executables:
+  exath_download: download
+
 dependencies:
   ffi: ^2.1.0
   web: ^1.0.0

@@ -38,21 +38,27 @@ void main() {
 
 ## Platform setup
 
-### Native (Dart VM, Flutter desktop/mobile)
+### Native (Dart VM, Flutter desktop) — no Rust needed
 
-The package loads the engine's C library via `dart:ffi`. Build it from the
-engine workspace and make it discoverable:
+Download the prebuilt library for your platform (from the engine's GitHub
+release) once:
 
 ```bash
-cargo build --release -p exath-engine-ffi
-# produces libexath_engine_ffi.{so,dylib,dll}
+dart run exath:download
 ```
 
-The library is looked up by its platform-default name
-(`libexath_engine_ffi.so` / `.dylib` / `exath_engine_ffi.dll`). Override the
-path with the `EXATH_LIB` environment variable, place it next to the executable,
-or on a system library path. For Flutter, bundle it as a native asset for the
-target platform.
+That fetches `libexath_engine_ffi.{so,dylib,dll}` into a per-user cache, where
+the package finds it automatically. **No Rust toolchain required.**
+
+The loader resolves the library in this order:
+1. the `EXATH_LIB` environment variable (explicit path),
+2. the cache populated by `dart run exath:download`,
+3. the platform-default name on the system library path / next to the executable.
+
+If you prefer to build it yourself: `cargo build --release -p exath-engine-ffi`.
+
+(Mobile — Android/iOS — bundles the prebuilt library via the Flutter plugin
+layer rather than downloading at runtime.)
 
 ### Web (Flutter web)
 

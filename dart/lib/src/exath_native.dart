@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:ffi/ffi.dart';
 
+import 'native_install.dart';
 import 'types.dart';
 
 // ── C struct mappings ────────────────────────────────────────────────────────
@@ -39,10 +40,17 @@ final class _CSession extends Opaque {}
 // ── Library loading ──────────────────────────────────────────────────────────
 
 DynamicLibrary _open() {
+  // 1. explicit override
   final override = Platform.environment['EXATH_LIB'];
   if (override != null && override.isNotEmpty) {
     return DynamicLibrary.open(override);
   }
+  // 2. the prebuilt downloaded by `dart run exath:download`
+  final cached = cachedLibPath();
+  if (cached != null && File(cached).existsSync()) {
+    return DynamicLibrary.open(cached);
+  }
+  // 3. platform-default name (system path / bundled next to the executable)
   if (Platform.isWindows) return DynamicLibrary.open('exath_engine_ffi.dll');
   if (Platform.isMacOS) return DynamicLibrary.open('libexath_engine_ffi.dylib');
   return DynamicLibrary.open('libexath_engine_ffi.so');
