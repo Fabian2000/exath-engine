@@ -2,3 +2,16 @@
 .packages
 pubspec.lock
 build/
+
+# Prebuilt native libraries are fetched from the GitHub release, not committed.
+android/src/main/jniLibs/
+ios/exath_engine_ffi.xcframework/
+macos/Frameworks/
+linux/libexath_engine_ffi.so
+windows/exath_engine_ffi.dll
+web/exath_engine_wasm*
+web/*.wasm
+web/package.json
+web/*.d.ts
+web/LICENSE-*
+web/README.md

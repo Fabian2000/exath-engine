@@ -3,7 +3,6 @@ import 'dart:io';
 
 import 'package:ffi/ffi.dart';
 
-import 'native_install.dart';
 import 'types.dart';
 
 // ── C struct mappings ────────────────────────────────────────────────────────
@@ -37,22 +36,20 @@ final class _CLineResult extends Struct {
 
 final class _CSession extends Opaque {}
 
-// ── Library loading ──────────────────────────────────────────────────────────
+// ── Library loading (prebuilt, bundled by the Flutter plugin) ────────────────
 
 DynamicLibrary _open() {
-  // 1. explicit override
+  // An explicit override always wins (useful for tests / pure Dart VM).
   final override = Platform.environment['EXATH_LIB'];
   if (override != null && override.isNotEmpty) {
     return DynamicLibrary.open(override);
   }
-  // 2. the prebuilt downloaded by `dart run exath:download`
-  final cached = cachedLibPath();
-  if (cached != null && File(cached).existsSync()) {
-    return DynamicLibrary.open(cached);
-  }
-  // 3. platform-default name (system path / bundled next to the executable)
-  if (Platform.isWindows) return DynamicLibrary.open('exath_engine_ffi.dll');
+  // iOS statically links the engine into the app binary (xcframework).
+  if (Platform.isIOS) return DynamicLibrary.process();
+  // macOS bundles the dylib in the app's Frameworks.
   if (Platform.isMacOS) return DynamicLibrary.open('libexath_engine_ffi.dylib');
+  if (Platform.isWindows) return DynamicLibrary.open('exath_engine_ffi.dll');
+  // Android (jniLibs) and Linux (bundled next to the app).
   return DynamicLibrary.open('libexath_engine_ffi.so');
 }
 
@@ -120,11 +117,10 @@ T _withCString<T>(String s, T Function(Pointer<Utf8>) body) {
   try {
     return body(ptr);
   } finally {
-    calloc.free(ptr);
+    malloc.free(ptr);
   }
 }
 
-/// Read an owned C string (allocated by the engine) and free it.
 String _takeString(Pointer<Utf8> ptr) {
   if (ptr == nullptr) return '';
   final s = ptr.toDartString();
@@ -151,8 +147,7 @@ List<String> supportedFunctions() {
   return s.isEmpty ? const [] : s.split(',');
 }
 
-/// A stateful session: variables and user-defined functions persist across
-/// calls. Call [dispose] when done to free the native session.
+/// A stateful session. Call [dispose] when done to free the native session.
 class ExathSession {
   Pointer<_CSession> _handle;
   bool _disposed = false;
@@ -164,7 +159,6 @@ class ExathSession {
     if (_disposed) throw StateError('ExathSession used after dispose()');
   }
 
-  /// Evaluate one numeric line (`var = expr`, `f(x) = ...`, or an expression).
   ExathResult eval(String line) {
     _check();
     return _withCString(line, (p) {
@@ -176,9 +170,6 @@ class ExathSession {
     });
   }
 
-  /// Evaluate one line including symbolic / matrix forms. Returns a
-  /// [NumberResult] for numeric results or an [ExpressionResult] for symbolic
-  /// ones. Throws [ExathException] on error.
   LineResult evalLine(String line) {
     _check();
     return _withCString(line, (p) {
@@ -225,7 +216,6 @@ class ExathSession {
     return s.isEmpty ? const [] : s.split(',');
   }
 
-  /// Free the native session. The instance must not be used afterwards.
   void dispose() {
     if (_disposed) return;
     _sessionFree(_handle);
