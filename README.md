@@ -119,6 +119,25 @@ console.log(s.fnNames());             // ["f", "g"]
 
 ---
 
+## Which entry point?
+
+Four ways to evaluate, chosen by *stateful?* and *numeric-only or also symbolic?*
+
+| Function | State | Returns | Understands symbolic forms? |
+| --- | --- | --- | --- |
+| `evaluate(expr)` | stateless | real `f64` (errors if complex) | no |
+| `evaluate_complex(expr)` | stateless | `CalcResult` (real or complex) | no |
+| `Session::eval(line)` | stateful (vars + functions) | `CalcResult` | no |
+| `Session::eval_line(line)` | stateful (vars + functions) | `LineResult` (value **or** expression) | yes |
+
+- `evaluate` is just `evaluate_complex` that errors instead of returning a
+  complex result; use it when you specifically want a real number.
+- `eval_line` is a superset of `eval`: it runs the same lines and additionally
+  understands `diff` / `factor` / `solve` / matrix / … forms, returning an
+  expression string for symbolic results. Use it whenever you want CAS.
+
+---
+
 ## Syntax reference
 
 ### Numbers
