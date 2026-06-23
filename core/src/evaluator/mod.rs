@@ -15,8 +15,12 @@ use crate::ast::{eval_ast, UserFns};
 use crate::error::ExathError;
 use std::collections::HashMap;
 
-/// Evaluate an expression, returning a real f64.
-/// Returns Err if the result is complex or the expression is invalid.
+/// Evaluate an expression to a real `f64` (stateless, numeric only).
+///
+/// Identical to [`evaluate_complex`] except it errors when the result is
+/// complex — use this when you specifically want a real number. Does not
+/// understand symbolic forms like `diff(x^2, x)` or `factor(...)`; for those
+/// use [`Session::eval_line`].
 pub fn evaluate(expr: &str, angle_mode: AngleMode) -> Result<f64, ExathError> {
     match evaluate_complex(expr, angle_mode)? {
         CalcResult::Real(value) => Ok(value),
@@ -24,7 +28,12 @@ pub fn evaluate(expr: &str, angle_mode: AngleMode) -> Result<f64, ExathError> {
     }
 }
 
-/// Evaluate an expression, returning a CalcResult (Real or Complex).
+/// Evaluate an expression to a [`CalcResult`] — Real or Complex (stateless,
+/// numeric only).
+///
+/// Same evaluation as [`evaluate`], but keeps complex results instead of
+/// erroring on them. For stateful evaluation (variables, user functions) use
+/// [`Session::eval`]; for symbolic forms use [`Session::eval_line`].
 pub fn evaluate_complex(expr: &str, angle_mode: AngleMode) -> Result<CalcResult, ExathError> {
     evaluate_with_vars(expr, angle_mode, &HashMap::new())
 }

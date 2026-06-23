@@ -52,10 +52,15 @@ impl Session {
         }
     }
 
-    /// Evaluate one line. Handles three forms:
+    /// Evaluate one line to a NUMERIC result. Handles three forms:
     /// - `f(x, y) = expr` — defines a user function (stored, returns 0)
     /// - `ident = expr`   — assigns a variable, returns its value
     /// - `expr`           — evaluates the expression, returns its value
+    ///
+    /// This is the numeric-only path: symbolic forms such as `diff(x^2, x)` or
+    /// `factor(...)` are NOT understood here and return an error. Use
+    /// [`Session::eval_line`] for those — it is a superset that runs the same
+    /// lines and additionally returns symbolic (expression) results.
     pub fn eval(&mut self, line: &str) -> Result<CalcResult, ExathError> {
         let line = line.trim();
 
