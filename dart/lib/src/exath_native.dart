@@ -130,6 +130,10 @@ String _takeString(Pointer<Utf8> ptr) {
 
 // ── Public API ───────────────────────────────────────────────────────────────
 
+/// No-op on native platforms (the library is bundled / loaded eagerly). Present
+/// so the same startup code works on web, where it loads the WASM module.
+Future<void> ensureInitialized() async {}
+
 ExathResult evaluate(String expr, {AngleMode angleMode = AngleMode.rad}) {
   return _withCString(expr, (p) {
     final r = _evaluate(p, angleMode.code);

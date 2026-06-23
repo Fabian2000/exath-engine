@@ -1,20 +1,37 @@
 # exath
 
-Dart and Flutter bindings for the [exath-engine](https://github.com/Fabian2000/exath-engine):
+Flutter plugin for the [exath-engine](https://github.com/Fabian2000/exath-engine):
 a complex-native math expression evaluator with computer algebra (differentiation,
 factoring, solving, integration, limits, Laplace, ODEs, linear algebra, ...).
+Prebuilt native libraries are bundled for every platform: no Rust toolchain, no
+manual setup.
 
-Everything goes through one eval gateway, identical to the Rust crate and the
-C / WASM builds: `evaluate` for one-shot numeric results, and `ExathSession`
-for stateful evaluation including the symbolic / matrix DSL via `evalLine`.
+One eval gateway, identical to the Rust crate and the C / WASM builds:
+`evaluate` for one-shot numeric results, and `ExathSession` for stateful
+evaluation including the symbolic / matrix DSL via `evalLine`.
+
+## Install
+
+```bash
+flutter pub add exath
+```
+
+Supported platforms: **Android, iOS, macOS, Windows, Linux, and Web.** The
+native library is bundled per platform (jniLibs / xcframework / dylib / dll /
+so); the web build ships the WASM module. Nothing to configure.
 
 ## Usage
+
+Call `await ensureInitialized()` once before using the API. It loads the WASM
+module on web and is a harmless no-op everywhere else, so the same code runs on
+all platforms:
 
 ```dart
 import 'package:exath/exath.dart';
 
-void main() {
-  // One-shot numeric
+Future<void> main() async {
+  await ensureInitialized();           // loads WASM on web; no-op elsewhere
+
   print(evaluate('2^10 + sqrt(9)'));   // 1027.0
   print(evaluate('sqrt(-4)'));         // 0.0 + 2.0i
 
@@ -28,54 +45,13 @@ void main() {
   print(s.evalLine('solve(x^2 - 4, x)'));      // x = 2, x = -2
   print(s.evalLine('integral(x^2, x)'));       // x^3 / 3
 
-  s.dispose(); // free the native session (no-op on web)
+  s.dispose();
 }
 ```
 
 `evalLine` returns a sealed `LineResult`: a `NumberResult` (numeric) or an
 `ExpressionResult` (symbolic string). `eval` always returns a numeric
-`ExathResult`. See `example/` for more.
-
-## Platform setup
-
-### Native (Dart VM, Flutter desktop): no Rust needed
-
-Download the prebuilt library for your platform (from the engine's GitHub
-release) once:
-
-```bash
-dart run exath:download
-```
-
-That fetches `libexath_engine_ffi.{so,dylib,dll}` into a per-user cache, where
-the package finds it automatically. **No Rust toolchain required.**
-
-The loader resolves the library in this order:
-1. the `EXATH_LIB` environment variable (explicit path),
-2. the cache populated by `dart run exath:download`,
-3. the platform-default name on the system library path / next to the executable.
-
-If you prefer to build it yourself: `cargo build --release -p exath-engine-ffi`.
-
-(Mobile, i.e. Android/iOS, bundles the prebuilt library via the Flutter plugin
-layer rather than downloading at runtime.)
-
-### Web (Flutter web)
-
-The package binds the WASM build via `js_interop`, expecting the wasm-bindgen
-module exposed on the JS global as `exath`. Build it and wire it up once:
-
-```bash
-cd ffi-wasm && wasm-pack build --target web
-```
-
-```html
-<script type="module">
-  import init, * as exath from './pkg/exath_engine_wasm.js';
-  await init();
-  globalThis.exath = exath;   // the Dart bindings look here
-</script>
-```
+`ExathResult`. See `example/` for a full Flutter app.
 
 ## API
 

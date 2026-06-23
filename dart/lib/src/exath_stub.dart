@@ -3,6 +3,8 @@ import 'types.dart';
 const _msg = 'exath: no native (dart:ffi) or web (js_interop) backend available '
     'on this platform';
 
+Future<void> ensureInitialized() async {}
+
 ExathResult evaluate(String expr, {AngleMode angleMode = AngleMode.rad}) =>
     throw UnsupportedError(_msg);
 

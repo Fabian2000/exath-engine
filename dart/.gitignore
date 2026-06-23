@@ -9,9 +9,4 @@ ios/exath_engine_ffi.xcframework/
 macos/Frameworks/
 linux/libexath_engine_ffi.so
 windows/exath_engine_ffi.dll
-web/exath_engine_wasm*
-web/*.wasm
-web/package.json
-web/*.d.ts
-web/LICENSE-*
-web/README.md
+assets/wasm/

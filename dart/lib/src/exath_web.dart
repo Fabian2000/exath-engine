@@ -1,9 +1,13 @@
+import 'dart:async';
 import 'dart:js_interop';
+import 'dart:js_interop_unsafe';
+
+import 'package:web/web.dart' as web;
 
 import 'types.dart';
 
-// Bindings to the wasm-bindgen module, expected to be exposed on the JS global
-// as `exath` (see the package README for the one-line setup).
+// The wasm-bindgen module is loaded by [ensureInitialized] and exposed on
+// `globalThis.exath`; these bindings then call into it.
 
 @JS('exath.evaluate')
 external _JsResult _jsEvaluate(JSString expr, JSString angleMode);
@@ -43,6 +47,41 @@ extension type _JsSession._(JSObject _) implements JSObject {
   external JSArray<JSString> fnNames();
 }
 
+bool _ready = false;
+
+/// Loads and initializes the bundled WASM module. Call once before using the
+/// API on web; subsequent calls are no-ops. (No-op on native platforms.)
+Future<void> ensureInitialized() async {
+  if (_ready) return;
+  const base = 'assets/packages/exath/assets/wasm';
+  final completer = Completer<void>();
+  late final JSFunction listener;
+  listener = ((web.Event _) {
+    if (completer.isCompleted) return;
+    final err = globalContext.getProperty('__exathError'.toJS);
+    if (err.isDefinedAndNotNull) {
+      completer.completeError(
+          ExathException('exath wasm init failed: ${err.dartify()}'));
+    } else {
+      completer.complete();
+    }
+  }).toJS;
+  web.window.addEventListener('exath:ready', listener);
+  final script = web.HTMLScriptElement()
+    ..type = 'module'
+    ..text = '''
+import init, * as m from '$base/exath_engine_wasm.js';
+init('$base/exath_engine_wasm_bg.wasm')
+  .then(() => { globalThis.exath = m; })
+  .catch((e) => { globalThis.__exathError = String(e); })
+  .finally(() => window.dispatchEvent(new Event('exath:ready')));
+''';
+  web.document.head!.appendChild(script);
+  await completer.future;
+  web.window.removeEventListener('exath:ready', listener);
+  _ready = true;
+}
+
 ExathResult evaluate(String expr, {AngleMode angleMode = AngleMode.rad}) {
   final r = _jsEvaluate(expr.toJS, angleMode.name_.toJS);
   if (r.isError) return ExathResult(0, 0, error: r.errorMessage);
@@ -54,7 +93,6 @@ bool isValid(String expr) => _jsIsValid(expr.toJS);
 List<String> supportedFunctions() =>
     _jsSupportedFunctions().toDart.map((e) => e.toDart).toList();
 
-/// A stateful session backed by the WASM `ExathSession`.
 class ExathSession {
   final _JsSession _s;
 
@@ -83,6 +121,5 @@ class ExathSession {
       _s.varNames().toDart.map((e) => e.toDart).toList();
   List<String> fnNames() => _s.fnNames().toDart.map((e) => e.toDart).toList();
 
-  /// No-op on web; the JS garbage collector reclaims the session.
   void dispose() {}
 }
