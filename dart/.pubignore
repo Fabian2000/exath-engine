@@ -18,9 +18,3 @@ example/ios/.symlinks/
 example/**/ephemeral/
 example/**/*.iml
 
-# wasm bundle: keep only the JS glue + the .wasm; drop the extras
-assets/wasm/*.d.ts
-assets/wasm/package.json
-assets/wasm/README.md
-assets/wasm/LICENSE-APACHE
-assets/wasm/LICENSE-MIT

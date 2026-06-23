@@ -41,13 +41,13 @@ Future<void> _file(String name, String dest) async {
 Future<void> _targz(String name, String destDir) async {
   final bytes = await _download(name);
   final archive = TarDecoder().decodeBytes(GZipDecoder().decodeBytes(bytes));
-  extractArchiveToDisk(archive, destDir);
+  await extractArchiveToDisk(archive, destDir);
   stdout.writeln('  $destDir/ (from $name)');
 }
 
 Future<void> _zip(String name, String destDir) async {
   final archive = ZipDecoder().decodeBytes(await _download(name));
-  extractArchiveToDisk(archive, destDir);
+  await extractArchiveToDisk(archive, destDir);
   stdout.writeln('  $destDir/ (from $name)');
 }
 
@@ -60,5 +60,17 @@ Future<void> main() async {
   await _file('libexath_engine_ffi-linux-x64.so', 'linux/libexath_engine_ffi.so');
   await _file('exath_engine_ffi-windows-x64.dll', 'windows/exath_engine_ffi.dll');
   await _targz('exath-engine-wasm.tar.gz', 'assets/wasm');
+  // wasm-pack ships a `.gitignore` containing `*` plus type defs / metadata.
+  // pub honours per-directory .gitignore, which would silently drop the whole
+  // assets/wasm directory from the published package. Keep only the JS glue and
+  // the .wasm so the declared assets actually ship.
+  const keep = {'exath_engine_wasm.js', 'exath_engine_wasm_bg.wasm'};
+  for (final entry in Directory('assets/wasm').listSync()) {
+    final name = entry.path.split(Platform.pathSeparator).last;
+    if (!keep.contains(name)) {
+      entry.deleteSync(recursive: true);
+      stdout.writeln('  pruned assets/wasm/$name');
+    }
+  }
   stdout.writeln('Done.');
 }

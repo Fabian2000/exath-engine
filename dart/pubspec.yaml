@@ -3,7 +3,7 @@ description: >-
   Flutter plugin for the exath-engine: a complex-native math expression
   evaluator with computer algebra (diff, factor, solve, integral, ...), through
   one eval gateway. Prebuilt native libraries are bundled for every platform.
-version: 1.0.1
+version: 1.0.2
 repository: https://github.com/Fabian2000/exath-engine
 issue_tracker: https://github.com/Fabian2000/exath-engine/issues
 topics:

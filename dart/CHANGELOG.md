@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.2
+
+- Fix: the WASM assets were missing from the published package (wasm-pack ships
+  a `.gitignore` with `*` that pub honoured per-directory, dropping assets/wasm).
+  Web and any consumer build now resolve the bundled WASM correctly.
+
 ## 1.0.1
 
 - First working release (1.0.0 was retracted before use). `exath` is now a
