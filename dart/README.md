@@ -38,7 +38,7 @@ void main() {
 
 ## Platform setup
 
-### Native (Dart VM, Flutter desktop) — no Rust needed
+### Native (Dart VM, Flutter desktop): no Rust needed
 
 Download the prebuilt library for your platform (from the engine's GitHub
 release) once:
@@ -57,7 +57,7 @@ The loader resolves the library in this order:
 
 If you prefer to build it yourself: `cargo build --release -p exath-engine-ffi`.
 
-(Mobile — Android/iOS — bundles the prebuilt library via the Flutter plugin
+(Mobile, i.e. Android/iOS, bundles the prebuilt library via the Flutter plugin
 layer rather than downloading at runtime.)
 
 ### Web (Flutter web)
