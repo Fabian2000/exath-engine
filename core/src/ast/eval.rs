@@ -526,8 +526,16 @@ mod stats_tests {
         evaluate(s, AngleMode::Rad).unwrap()
     }
     #[test]
+    fn numeric_and_unit_dsl_forms() {
+        assert!((e("sum(k, k, 1, 5)") - 15.0).abs() < 1e-9);
+        assert!((e("product(k, k, 1, 4)") - 24.0).abs() < 1e-9);
+        assert!((e("deriv(x^2, x, 3)") - 6.0).abs() < 1e-5);
+        assert!((e("convert(5, km, m)") - 5000.0).abs() < 1e-9);
+        assert!((e("convert(100, degC, degF)") - 212.0).abs() < 1e-9);
+    }
+    #[test]
     fn stats_dists_special() {
-        // spaces after commas (the engine reads `1,2` as the decimal 1.2)
+        // comma is a pure separator; decimals use `.`
         assert!((e("mean(1, 2, 3)") - 2.0).abs() < 1e-9);
         assert!((e("median(1, 2, 3, 4)") - 2.5).abs() < 1e-9);
         assert!((e("variance(2, 4, 4, 4, 5, 5, 7, 9)") - 4.0).abs() < 1e-9);

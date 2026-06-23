@@ -451,6 +451,19 @@ convert(5, km, m)           → 5000
 
 Range limit for `sum`/`product`: 10,000,000 terms.
 
+`convert` unit names (`from` / `to` must share a dimension):
+
+| Dimension | Units |
+| --- | --- |
+| Length | `nm` `um` `mm` `cm` `m` `km` `in` `ft` `yd` `mi` |
+| Mass | `mg` `g` `kg` `t` `oz` `lb` |
+| Time | `ms` `s` `min` `h` `day` |
+| Temperature (affine) | `K` `degC` `degF` |
+| Volume | `ml` `l` |
+| Area | `ha` |
+
+Mixing dimensions (e.g. `convert(5, km, s)`) is an error.
+
 ---
 
 ## Linear algebra
