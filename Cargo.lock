@@ -16,18 +16,18 @@ checksum = "9330f8b2ff13f34540b44e946ef35111825727b38d33286ef986142615121801"
 
 [[package]]
 name = "exath-engine"
-version = "0.1.0"
+version = "1.0.0"
 
 [[package]]
 name = "exath-engine-ffi"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "exath-engine",
 ]
 
 [[package]]
 name = "exath-engine-wasm"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "exath-engine",
  "wasm-bindgen",

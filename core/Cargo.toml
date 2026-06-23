@@ -1,6 +1,6 @@
 [package]
 name = "exath-engine"
-version = "0.1.0"
+version = "1.0.0"
 edition = "2021"
 description = "Complex-native expression evaluator engine powering Exath calculator"
 license = "MIT"

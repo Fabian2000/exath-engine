@@ -19,7 +19,7 @@ fn main() {
         run_lines(&mut session, content.lines(), true);
     } else {
         // REPL mode
-        println!("exath 0.1, interactive DSL session (type 'exit' to quit)");
+        println!("exath 1.0, interactive DSL session (type 'exit' to quit)");
         let stdin = io::stdin();
         let mut stdout = io::stdout();
         let mut line_num = 0u32;

@@ -4,7 +4,7 @@ All notable changes to exath-engine are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/), and the project aims for
 [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [1.0.0]
 
 ### Added
 - Computer algebra: `simplify` (canonical normal form + identities), `expand`,

@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.1.0
+## 1.0.0
 
 - Initial release: Dart/Flutter bindings for the exath-engine.
 - One eval gateway: `evaluate`, `isValid`, `supportedFunctions`, and
