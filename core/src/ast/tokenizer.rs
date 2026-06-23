@@ -219,7 +219,7 @@ pub(crate) fn tokenize(input: &str) -> Result<Vec<Token>, ExathError> {
                     pos += 1;
                 }
                 // Exath 2.0: the comma is purely a separator. Decimals use `.`
-                // only — so `,` is never folded into a number here.
+                // only, so `,` is never folded into a number here.
                 let value: f64 = num_str
                     .parse()
                     .map_err(|_| ExathError::parse("Invalid number"))?;

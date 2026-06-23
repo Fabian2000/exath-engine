@@ -18,7 +18,7 @@ use std::collections::HashMap;
 /// Evaluate an expression to a real `f64` (stateless, numeric only).
 ///
 /// Identical to [`evaluate_complex`] except it errors when the result is
-/// complex — use this when you specifically want a real number. Does not
+/// complex, use this when you specifically want a real number. Does not
 /// understand symbolic forms like `diff(x^2, x)` or `factor(...)`; for those
 /// use [`Session::eval_line`].
 pub fn evaluate(expr: &str, angle_mode: AngleMode) -> Result<f64, ExathError> {
@@ -28,7 +28,7 @@ pub fn evaluate(expr: &str, angle_mode: AngleMode) -> Result<f64, ExathError> {
     }
 }
 
-/// Evaluate an expression to a [`CalcResult`] — Real or Complex (stateless,
+/// Evaluate an expression to a [`CalcResult`], Real or Complex (stateless,
 /// numeric only).
 ///
 /// Same evaluation as [`evaluate`], but keeps complex results instead of

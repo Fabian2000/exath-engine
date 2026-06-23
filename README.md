@@ -6,10 +6,10 @@ A complex-native mathematical expression DSL. Written in Rust, available as a na
 
 ## Design principles
 
-- **Deterministic** — same expression always produces the same result; no randomness, no side effects
-- **Safe** — no I/O, no code execution, no filesystem access; safe to embed in untrusted environments
-- **Complex-native** — all expressions evaluate over ℂ; real results are a special case (imaginary part = 0)
-- **Strict on domain errors** — operations like comparison (`>`, `<`, …) and rounding require real inputs and return errors for complex values; modulo likewise
+- **Deterministic**: same expression always produces the same result; no randomness, no side effects
+- **Safe**: no I/O, no code execution, no filesystem access; safe to embed in untrusted environments
+- **Complex-native**: all expressions evaluate over ℂ; real results are a special case (imaginary part = 0)
+- **Strict on domain errors**: operations like comparison (`>`, `<`, …) and rounding require real inputs and return errors for complex values; modulo likewise
 
 ---
 
@@ -17,29 +17,29 @@ A complex-native mathematical expression DSL. Written in Rust, available as a na
 
 ```text
 engine/
-├── core/        exath-engine       — Rust library (the evaluator itself)
-├── ffi-c/       exath-engine-ffi   — C-compatible shared library + header
-└── ffi-wasm/    exath-engine-wasm  — WebAssembly + JS bindings (wasm-pack)
+├── core/        exath-engine       Rust library (the evaluator itself)
+├── ffi-c/       exath-engine-ffi   C-compatible shared library + header
+└── ffi-wasm/    exath-engine-wasm  WebAssembly + JS bindings (wasm-pack)
 ```
 
 ---
 
 ## Features
 
-- **Complex numbers** — every expression is evaluated over ℂ; real results are a special case
-- **Session with variables** — stateful context, `a = 5` assigns, `a + 1` reads
-- **User-defined functions** — `f(x) = x^2`, `g(x, y) = x*y + 1` stored in session, callable by name
-- **Rich function set** — trig, inverse trig, hyperbolic, inverse hyperbolic, exp/log, rounding, complex parts, and more
-- **Multi-argument functions** — `if(cond, a, b)`, `min(...)`, `max(...)`, `clamp(x, lo, hi)`, `gcd(a, b)`, `lcm(a, b)`
-- **Comparison & logic operators** — `>`, `<`, `>=`, `<=`, `==`, `!=`, `&&`, `||`, `!`
-- **One eval gateway** — every operation (numeric, symbolic, matrix, units) is
+- **Complex numbers**: every expression is evaluated over ℂ; real results are a special case
+- **Session with variables**: stateful context, `a = 5` assigns, `a + 1` reads
+- **User-defined functions**: `f(x) = x^2`, `g(x, y) = x*y + 1` stored in session, callable by name
+- **Rich function set**: trig, inverse trig, hyperbolic, inverse hyperbolic, exp/log, rounding, complex parts, and more
+- **Multi-argument functions**: `if(cond, a, b)`, `min(...)`, `max(...)`, `clamp(x, lo, hi)`, `gcd(a, b)`, `lcm(a, b)`
+- **Comparison & logic operators**: `>`, `<`, `>=`, `<=`, `==`, `!=`, `&&`, `||`, `!`
+- **One eval gateway**: every operation (numeric, symbolic, matrix, units) is
   invoked by evaluating a string: `evaluate(expr)` or `Session::eval` /
   `Session::eval_line`. The Rust crate, C-FFI and WASM expose exactly this
   gateway, so all three are identical
-- **Computer algebra** — `diff`, `simplify`, `expand`, `factor`, `solve`,
+- **Computer algebra**: `diff`, `simplify`, `expand`, `factor`, `solve`,
   `integral`, `taylor`, `limit`, `laplace`, `dsolve`, … all as `eval_line` forms
-- **AST access** — parse to an inspectable tree for tooling
-- **Three targets** — Rust, C shared library (with auto-generated header), WebAssembly
+- **AST access**: parse to an inspectable tree for tooling
+- **Three targets**: Rust, C shared library (with auto-generated header), WebAssembly
 
 ---
 
@@ -224,7 +224,7 @@ Implicit multiplication is supported: `2pi`, `3(x+1)`, `2sqrt(x)`.
 
 | Function | Description |
 | --- | --- |
-| `if(cond, true_val, false_val)` | Conditional — only the chosen branch is evaluated |
+| `if(cond, true_val, false_val)` | Conditional; only the chosen branch is evaluated |
 | `piecewise(c1, v1, c2, v2, …, default)` | First true condition wins; e.g. `piecewise(x<0, -x, x)` = \|x\| |
 | `min(a, b, ...)` | Minimum of any number of real arguments |
 | `max(a, b, ...)` | Maximum of any number of real arguments |
@@ -275,7 +275,7 @@ Integer arguments (within i64/i128 range).
 
 A `Session` holds a variable table and a function table that persist across `eval` calls.
 
-**Variable assignment** — line of the form `identifier = expression`:
+**Variable assignment**: line of the form `identifier = expression`:
 
 ```text
 x = 5
@@ -289,7 +289,7 @@ x = -3
 result = if(x >= 0, sqrt(x), abs(x))   → 3
 ```
 
-**Numeric vs symbolic** — `eval` returns a number; `eval_line` additionally
+**Numeric vs symbolic**: `eval` returns a number; `eval_line` additionally
 understands symbolic forms (`diff`, `factor`, `solve`, …) and returns an
 expression string for them. A symbolic result can be bound to a name and reused:
 
@@ -298,7 +298,7 @@ g = diff(x^2, x)   → 2 * x        (symbolic variable)
 g + 1              → 2 * x + 1
 ```
 
-**Introspection** — `is_valid(expr)` returns whether an expression parses;
+**Introspection**: `is_valid(expr)` returns whether an expression parses;
 `supported_functions()` lists every built-in name.
 
 **C API**:
@@ -343,7 +343,7 @@ fib_approx(10)    → 55
 
 Functions can reference session variables and call built-in functions. Recursion is **not** supported (the body is evaluated at call time with no call stack).
 
-**Rust API** — function definitions go through the same `eval` call:
+**Rust API**: function definitions go through the same `eval` call:
 
 ```rust
 let mut s = Session::new(AngleMode::Rad);
@@ -543,7 +543,7 @@ Designed for deterministic evaluation, not symbolic algebra or high-throughput b
 - **Parsing** is O(n) in expression length (single-pass tokenizer + recursive descent parser)
 - **Evaluation** is O(depth of AST) for expression evaluation
 - **Numeric range forms** are O(n) in interval/range size: `deriv` uses 2 evaluations, definite `integral` uses an adaptive Simpson rule, `sum`/`product` evaluate once per integer step
-- **No global state** — each `Session` is an independent value; safe to use concurrently from multiple threads as long as each thread owns its own `Session`
+- **No global state**: each `Session` is an independent value; safe to use concurrently from multiple threads as long as each thread owns its own `Session`
 
 ---
 
@@ -586,7 +586,7 @@ exath is an embeddable, multi-language engine, so its external number type is
 - **Exact where it counts, f64 elsewhere.** Symbolic coefficients use exact
   rationals (`i128`-based); `1/3 + 1/3 = 2/3`, `∫x² dx = x³/3`. If a rational
   numerator/denominator would overflow `i128`, it degrades gracefully to `f64`
-  (loses exactness, never panics). There is no arbitrary precision (BigInt) — a
+  (loses exactness, never panics). There is no arbitrary precision (BigInt): a
   deliberate trade-off for the universal cross-language `f64` contract.
 - **Symbolic decisions use tolerances.** Constant folding, zero-tests and root
   detection compare with small tolerances (~1e-9..1e-12). The differential test

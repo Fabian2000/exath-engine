@@ -103,7 +103,7 @@ pub fn eval_ast(
     }
 }
 
-/// Evaluate a function call with its argument AST nodes (lazy — args not yet evaluated).
+/// Evaluate a function call with its argument AST nodes (lazy, args not yet evaluated).
 fn eval_call(
     name: &str,
     args: &[Ast],
@@ -228,7 +228,7 @@ fn eval_call(
 
         // ── Numerical sum / product / derivative + unit conversion (DSL) ──────
         "sum" | "product" if args.len() == 4 => {
-            // sum(expr, var, from, to) — integer-stepped accumulation.
+            // sum(expr, var, from, to), integer-stepped accumulation.
             let v = match &args[1] {
                 Ast::Var(name) => name.clone(),
                 _ => return Err(ExathError::arg_type(format!("{}: 2nd argument must be a variable", name))),
@@ -250,7 +250,7 @@ fn eval_call(
             Ok(Cx::real(acc))
         }
         "deriv" if args.len() == 3 => {
-            // deriv(expr, var, x0) — central finite difference.
+            // deriv(expr, var, x0), central finite difference.
             let v = match &args[1] {
                 Ast::Var(name) => name.clone(),
                 _ => return Err(ExathError::arg_type("deriv: 2nd argument must be a variable")),
@@ -265,7 +265,7 @@ fn eval_call(
             Ok(Cx::real((fwd - bwd) / (2.0 * h)))
         }
         "convert" if args.len() == 3 => {
-            // convert(value, fromUnit, toUnit) — unit names as identifiers.
+            // convert(value, fromUnit, toUnit), unit names as identifiers.
             let value = eval_real_arg(&args[0], vars, fns, angle_mode, "convert")?;
             let unit_name = |a: &Ast| -> Result<String, ExathError> {
                 match a {

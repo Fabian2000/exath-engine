@@ -1,4 +1,4 @@
-# exath-engine — C / C++ / C#
+# exath-engine: C / C++ / C#
 
 C-compatible shared library for the exath-engine expression evaluator.
 
@@ -111,7 +111,7 @@ typedef struct {
 
 All `char *` returns (error messages, function lists) must be freed with `exath_free_string()`.
 
-## The eval gateway — everything via one call
+## The eval gateway: everything via one call
 
 There are no per-operation functions. Every symbolic, numeric, matrix and unit
 operation is invoked by passing its string form to `exath_session_eval_line`.

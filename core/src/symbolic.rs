@@ -6,7 +6,7 @@
 //! renders it back to an expression string.
 //!
 //! Symbolic calculus here is defined in the standard (radian) mathematical
-//! sense, independent of any evaluation angle mode — `d/dx sin(x) = cos(x)`.
+//! sense, independent of any evaluation angle mode, `d/dx sin(x) = cos(x)`.
 //!
 //! Panic-free by contract: no `unwrap`, `expect` or `panic!`; every fallible
 //! path returns `ExathError`.
@@ -66,7 +66,7 @@ pub fn integrate_definite_ast(f: &Ast, var: &str, a: f64, b: f64) -> Result<Ast,
             }
         }
     }
-    // Fallback: adaptive Simpson quadrature — so a definite integral over a
+    // Fallback: adaptive Simpson quadrature, so a definite integral over a
     // well-behaved integrand always returns a value.
     let g = |x: f64| -> Option<f64> {
         eval_const_f64(&substitute(f, var, &num(x)))
@@ -405,7 +405,7 @@ fn integrate_term(t: &Term, var: &str) -> Result<Ast, ExathError> {
             }
         }
 
-        // ∫ K·(a·x+b)^e dx — a sum (or reciprocal) raised to a power.
+        // ∫ K·(a·x+b)^e dx, a sum (or reciprocal) raised to a power.
         // e == -1 → K·ln(a·x+b)/a ;  else → K·(a·x+b)^(e+1)/(a·(e+1)).
         if let Factor::SumBase(bp) = f {
             // ∫ K/(A·x² + C) dx = K/√(A·C) · atan(x·√(A/C))  (A, C > 0)
@@ -545,7 +545,7 @@ fn integrate_term(t: &Term, var: &str) -> Result<Ast, ExathError> {
         }
     }
 
-    // Rational function: K·x^m / Q(x) with Q of degree ≥ 2 — partial fractions
+    // Rational function: K·x^m / Q(x) with Q of degree ≥ 2, partial fractions
     // when Q has distinct rational roots: ∫ = Σ Aᵢ·ln(x − rᵢ).
     {
         let mut q_poly: Option<Poly> = None;
@@ -841,7 +841,7 @@ fn integrate_quadratic_recip(k_ast: &Ast, m: i64, q: &Poly, var: &str) -> Option
     let c = qmap.get(&0).copied().unwrap_or_else(Num::zero);
     let disc = b.mul(&b).to_f64() - 4.0 * a.mul(&c).to_f64();
     if disc >= 0.0 {
-        return None; // reducible (real roots) — handled elsewhere
+        return None; // reducible (real roots), handled elsewhere
     }
     let var_ast = Ast::Var(var.to_string());
     // D = sqrt(4ac − b²)
@@ -1136,7 +1136,7 @@ fn solve_coeffs(coeffs: &[Num]) -> Result<Vec<Ast>, ExathError> {
         hi -= 1;
     }
     if hi == 0 {
-        return Err(ExathError::domain("solve: identity — every value is a solution"));
+        return Err(ExathError::domain("solve: identity, every value is a solution"));
     }
     let degree = hi - 1;
     let get = |i: usize| coeffs.get(i).copied().unwrap_or_else(Num::zero);
@@ -1392,7 +1392,7 @@ pub fn expand_tree(ast: &Ast) -> Ast {
 
 /// Taylor polynomial of `expr` about `var = x0` up to (and including) degree
 /// `order`. Coefficients stay exact (rational) when the derivative values are
-/// integers — e.g. the series of `exp(x)` has `1/2`, `1/6`, …
+/// integers, e.g. the series of `exp(x)` has `1/2`, `1/6`, …
 pub fn taylor(expr: &str, var: &str, x0: f64, order: usize) -> Result<String, ExathError> {
     Ok(render(&taylor_ast(&parse_str(expr)?, var, x0, order)?))
 }
@@ -1845,7 +1845,7 @@ fn num_to_ast(n: Num) -> Ast {
     }
 }
 
-/// `sqrt(n)` as an AST — exact when `n` is a perfect-square rational.
+/// `sqrt(n)` as an AST, exact when `n` is a perfect-square rational.
 fn num_sqrt_ast(n: &Num) -> Ast {
     if let Some((p, q)) = n.as_ratio() {
         if p >= 0 && q > 0 {
@@ -2653,7 +2653,7 @@ fn opaque_binop(op: &BinOp, l: &Ast, r: &Ast) -> Result<Poly, ExathError> {
 }
 
 /// If `ast` has no variables and evaluates (in radians) to a clean integer,
-/// return that integer — used to fold constant sub-expressions like `sin(0)`,
+/// return that integer, used to fold constant sub-expressions like `sin(0)`,
 /// `cos(pi)`, `ln(1)`, `4!`. Non-integer constants (e.g. `ln(2)`, `sqrt(2)`) are
 /// deliberately left symbolic.
 fn fold_const(ast: &Ast) -> Option<f64> {
@@ -2863,9 +2863,9 @@ fn rebuild_poly(p: &Poly) -> Ast {
 /// Simplify an expression to canonical normal form. Falls back to the input
 /// unchanged if normalisation is not possible (e.g. literal division by zero).
 ///
-/// Two candidates are produced — the direct normal form, and one where
+/// Two candidates are produced, the direct normal form, and one where
 /// `tan/cot/sec/csc` (and hyperbolic counterparts) are first rewritten to
-/// `sin/cos` (`sinh/cosh`) — and the structurally smaller result is kept. This
+/// `sin/cos` (`sinh/cosh`), and the structurally smaller result is kept. This
 /// way `tan(x)*cos(x) → sin(x)` and `sec(x)^2 - tan(x)^2 → 1` collapse, while a
 /// lone `tan(x)` is preserved unchanged.
 pub fn simplify_ast(ast: Ast) -> Ast {
@@ -3469,7 +3469,7 @@ mod tests {
     #[test]
     fn partial_fraction_integration() {
         use crate::{AngleMode, CalcResult, Session};
-        // ∫ 1/((x-1)(x-2)) dx and ∫ (x+3)/(x^2-3x+2) dx — verify via d/dx = integrand.
+        // ∫ 1/((x-1)(x-2)) dx and ∫ (x+3)/(x^2-3x+2) dx, verify via d/dx = integrand.
         let cases = [
             "1/((x - 1)*(x - 2))",
             "(x + 3)/(x^2 - 3*x + 2)",

@@ -18,7 +18,7 @@ impl Rng {
     }
 }
 
-/// Feeding random token soup must never panic — only ever Ok/Err.
+/// Feeding random token soup must never panic, only ever Ok/Err.
 #[test]
 fn fuzz_parser_and_evaluator_never_panic() {
     let toks = [

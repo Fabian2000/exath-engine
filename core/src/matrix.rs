@@ -2,7 +2,7 @@
 //!
 //! A self-contained, additive module: it does not touch the scalar expression
 //! evaluator, so the existing calculator is unaffected. Operations return
-//! `Result` on dimension mismatch or singular systems — panic-free (no
+//! `Result` on dimension mismatch or singular systems, panic-free (no
 //! `unwrap`/`expect`/`panic!`).
 
 use crate::angle_mode::AngleMode;
@@ -246,7 +246,7 @@ impl Matrix {
         self.data.iter().map(|x| x * x).sum::<f64>().sqrt()
     }
 
-    /// Singular values (descending) via one-sided Jacobi SVD — numerically
+    /// Singular values (descending) via one-sided Jacobi SVD, numerically
     /// sound (does NOT form MᵀM, so it preserves conditioning).
     pub fn singular_values(&self) -> Result<Vec<f64>, ExathError> {
         let (m, n) = (self.rows, self.cols);
@@ -307,7 +307,7 @@ impl Matrix {
     }
 
     /// Eigenvalues and orthonormal eigenvectors of a SYMMETRIC matrix via the
-    /// Jacobi rotation algorithm — accurate and stable. Eigenvalues ascending;
+    /// Jacobi rotation algorithm, accurate and stable. Eigenvalues ascending;
     /// eigenvectors are the columns of the returned matrix.
     pub fn jacobi_eigen(&self) -> Result<(Vec<f64>, Matrix), ExathError> {
         let n = self.require_square("eigen")?;
@@ -574,7 +574,7 @@ pub enum MValue {
     Mat(Matrix),
 }
 
-/// True if `ast` is (or contains) a matrix literal or a matrix function call —
+/// True if `ast` is (or contains) a matrix literal or a matrix function call,
 /// used to route a line to [`eval_matrix_ast`] instead of the scalar evaluator.
 pub fn is_matrix_expr(ast: &Ast) -> bool {
     match ast {

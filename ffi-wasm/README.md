@@ -1,4 +1,4 @@
-# exath-engine — JavaScript / TypeScript
+# exath-engine: JavaScript / TypeScript
 
 WebAssembly bindings for the exath-engine expression evaluator.
 
@@ -85,7 +85,7 @@ s.clearVars();
 
 ## Numeric forms (via evalLine)
 
-Numeric range forms and unit conversion are `evalLine` DSL forms — read `.re`:
+Numeric range forms and unit conversion are `evalLine` DSL forms; read `.re`:
 
 ```js
 const s = new ExathSession("rad");
@@ -118,7 +118,7 @@ Every function returns an `ExathResult` object:
 | `isValid(expr)` | Check if expression parses |
 | `supportedFunctions()` | Array of built-in function names |
 
-Everything else — symbolic, numeric range forms, matrix, units — goes through
+Everything else (symbolic, numeric range forms, matrix, units) goes through
 `ExathSession.evalLine` (see below). There are no per-operation functions.
 
 ### ExathSession
@@ -139,7 +139,7 @@ Everything else — symbolic, numeric range forms, matrix, units — goes throug
 
 Pass as string: `"rad"` (default), `"deg"`, or `"grad"`. Case-insensitive.
 
-## The eval gateway — symbolic, matrix, numeric
+## The eval gateway: symbolic, matrix, numeric
 
 All symbolic and matrix operations go through `evalLine`. Symbolic results have
 `.isExpression === true` (read `.expression`); numeric results give `.re`/`.im`.

@@ -86,7 +86,7 @@ pub extern "C" fn exath_free_string(ptr: *mut c_char) {
 // ── Evaluate ─────────────────────────────────────────────────────────────────
 
 /// Evaluate an expression string.
-/// Returns ExathResult — free error_msg with exath_free_string() if is_error == 1.
+/// Returns ExathResult, free error_msg with exath_free_string() if is_error == 1.
 #[no_mangle]
 pub extern "C" fn exath_evaluate(
     expr: *const c_char,
@@ -145,7 +145,7 @@ pub extern "C" fn exath_session_free(session: *mut ExathSession) {
 }
 
 /// Evaluate one line in a session (may be `var = expr` or a plain expression).
-/// Returns ExathResult — free error_msg with exath_free_string() if is_error == 1.
+/// Returns ExathResult, free error_msg with exath_free_string() if is_error == 1.
 #[no_mangle]
 pub extern "C" fn exath_session_eval(
     session: *mut ExathSession,
@@ -198,7 +198,7 @@ fn line_error(msg: &str) -> ExathLineResult {
     }
 }
 
-/// Evaluate one line, understanding every DSL form — symbolic (diff, simplify,
+/// Evaluate one line, understanding every DSL form, symbolic (diff, simplify,
 /// factor, solve, integral, …), linear algebra (det, inv, eigenvalues, …) and
 /// numeric forms (sum, product, deriv). See ExathLineResult for the result
 /// convention. This is the single gateway for all operations.

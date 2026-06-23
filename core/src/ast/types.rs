@@ -7,7 +7,7 @@ pub enum BinOp {
     Div,
     Pow,
     Mod,
-    // Comparison operators — result is 1.0 (true) or 0.0 (false)
+    // Comparison operators, result is 1.0 (true) or 0.0 (false)
     Eq,   // ==
     Ne,   // !=
     Lt,   // <
@@ -37,6 +37,6 @@ pub enum Ast {
     /// Function call with zero or more arguments: name(a, b, ...)
     Call(String, Vec<Ast>),
     /// Matrix literal: rows of element expressions, e.g. `[[1,2],[3,4]]`.
-    /// Not valid in a scalar context — evaluated by the matrix layer only.
+    /// Not valid in a scalar context, evaluated by the matrix layer only.
     Matrix(Vec<Vec<Ast>>),
 }

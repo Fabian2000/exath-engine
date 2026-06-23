@@ -33,7 +33,7 @@ pub struct Session {
     pub angle_mode: AngleMode,
     vars: HashMap<String, Cx>,
     fns: UserFns,
-    /// Symbolic variables — names bound to an expression (e.g. via
+    /// Symbolic variables, names bound to an expression (e.g. via
     /// `g = diff(x^2, x)`). Used only by [`Session::eval_line`].
     sym_vars: HashMap<String, Ast>,
     /// Sign assumptions on variables (+1 = nonnegative, −1 = nonpositive),
@@ -53,13 +53,13 @@ impl Session {
     }
 
     /// Evaluate one line to a NUMERIC result. Handles three forms:
-    /// - `f(x, y) = expr` — defines a user function (stored, returns 0)
-    /// - `ident = expr`   — assigns a variable, returns its value
-    /// - `expr`           — evaluates the expression, returns its value
+    /// - `f(x, y) = expr`, defines a user function (stored, returns 0)
+    /// - `ident = expr`  , assigns a variable, returns its value
+    /// - `expr`          , evaluates the expression, returns its value
     ///
     /// This is the numeric-only path: symbolic forms such as `diff(x^2, x)` or
     /// `factor(...)` are NOT understood here and return an error. Use
-    /// [`Session::eval_line`] for those — it is a superset that runs the same
+    /// [`Session::eval_line`] for those, it is a superset that runs the same
     /// lines and additionally returns symbolic (expression) results.
     pub fn eval(&mut self, line: &str) -> Result<CalcResult, ExathError> {
         let line = line.trim();
@@ -85,10 +85,10 @@ impl Session {
         super::evaluate_with_vars_and_fns(line, self.angle_mode, &self.vars, &self.fns)
     }
 
-    /// Like [`Session::eval`], but additionally understands every DSL form —
+    /// Like [`Session::eval`], but additionally understands every DSL form:
     /// symbolic (`diff`, `simplify`, `expand`, `factor`, `solve`, `integral`,
     /// `taylor`, `limit`, `laplace`, `dsolve`, …), linear algebra (`det`, `inv`,
-    /// `eigenvalues`, …) and numeric range forms (`sum`, `product`, `deriv`) —
+    /// `eigenvalues`, …) and numeric range forms (`sum`, `product`, `deriv`),
     /// returning a [`LineResult::Expression`] for symbolic results and a
     /// [`LineResult::Value`] for numeric ones. A name can be bound to a symbolic
     /// expression and reused. Plain numeric lines behave exactly as in
@@ -97,14 +97,14 @@ impl Session {
     pub fn eval_line(&mut self, line: &str) -> Result<LineResult, ExathError> {
         let line = line.trim();
 
-        // f(x) = body  — define a user function.
+        // f(x) = body , define a user function.
         if let Some((name, params, body_str)) = split_fn_def(line) {
             let body_ast = parse_str(body_str)?;
             self.fns.insert(name.to_string(), (params, body_ast));
             return Ok(LineResult::Value(CalcResult::Real(0.0)));
         }
 
-        // ident = rhs  — assignment (numeric or symbolic).
+        // ident = rhs , assignment (numeric or symbolic).
         if let Some((lhs, rhs)) = split_assignment(line) {
             let ast = parse_str(rhs)?;
             if let Some(expr) = self.try_symbolic(&ast)? {
@@ -799,7 +799,7 @@ impl Session {
 }
 
 /// Apply sign assumptions to canonical forms: `sqrt(v^2) → v` / `-v`,
-/// `abs(v) → v` / `-v` when the sign of `v` is known. Additive — does not
+/// `abs(v) → v` / `-v` when the sign of `v` is known. Additive, does not
 /// touch the core simplifier.
 fn apply_assumptions(ast: &Ast, assume: &HashMap<String, i8>) -> Ast {
     if assume.is_empty() {

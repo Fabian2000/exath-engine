@@ -1,8 +1,8 @@
 //! Randomised differential testing for the *new* calculus paths: integration,
 //! solving, and definite integrals. Any returned result is checked against the
 //! ground truth (d/dx == integrand, f(root) == 0, independent quadrature), so a
-//! wrong answer on ANY code path — curated rule, substitution, or partial
-//! fractions — fails the test.
+//! wrong answer on ANY code path, curated rule, substitution, or partial
+//! fractions, fails the test.
 
 use exath_engine::symbolic::{antiderivative, differentiate, integrate_definite, solve};
 use exath_engine::{AngleMode, CalcResult, Session};

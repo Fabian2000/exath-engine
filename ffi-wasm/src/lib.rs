@@ -137,7 +137,7 @@ impl ExathSession {
         calc_to_result(self.inner.eval(line))
     }
 
-    /// Evaluate one line, also understanding every DSL form — symbolic (diff,
+    /// Evaluate one line, also understanding every DSL form, symbolic (diff,
     /// simplify, factor, solve, integral, …), linear algebra (det, inv,
     /// eigenvalues, …) and numeric forms (sum, product, deriv). Returns an
     /// `ExathLine`: `.isExpression` is true for symbolic results (read
