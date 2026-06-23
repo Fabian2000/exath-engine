@@ -19,7 +19,8 @@ A complex-native mathematical expression DSL. Written in Rust, available as a na
 engine/
 ├── core/        exath-engine       Rust library (the evaluator itself)
 ├── ffi-c/       exath-engine-ffi   C-compatible shared library + header
-└── ffi-wasm/    exath-engine-wasm  WebAssembly + JS bindings (wasm-pack)
+├── ffi-wasm/    exath-engine-wasm  WebAssembly + JS bindings (wasm-pack)
+└── dart/        exath              Dart / Flutter package (pub.dev)
 ```
 
 ---
