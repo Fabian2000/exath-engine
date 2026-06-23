@@ -1,0 +1,23 @@
+name: exath
+description: >-
+  Dart and Flutter bindings for the exath-engine: a complex-native math
+  expression evaluator with computer algebra (diff, factor, solve, integral,
+  ...), accessed through one eval gateway.
+version: 0.1.0
+repository: https://github.com/Fabian2000/exath-engine
+issue_tracker: https://github.com/Fabian2000/exath-engine/issues
+topics:
+  - math
+  - calculator
+  - cas
+  - evaluator
+
+environment:
+  sdk: ">=3.3.0 <4.0.0"
+
+dependencies:
+  ffi: ^2.1.0
+  web: ^1.0.0
+
+dev_dependencies:
+  lints: ^4.0.0
