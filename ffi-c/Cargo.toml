@@ -3,7 +3,7 @@ name = "exath-engine-ffi"
 version = "1.0.0"
 edition = "2021"
 description = "C ABI bindings for the exath-engine expression evaluator"
-license = "MIT"
+license = "MIT OR Apache-2.0"
 repository = "https://github.com/Fabian2000/exath-engine"
 readme = "README.md"
 

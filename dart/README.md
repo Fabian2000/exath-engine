@@ -89,4 +89,5 @@ For the full DSL form reference (every `diff` / `factor` / `solve` / matrix /
 
 ## License
 
-MIT
+Licensed under either of Apache License 2.0 (`LICENSE-APACHE`) or MIT
+(`LICENSE-MIT`) at your option.
