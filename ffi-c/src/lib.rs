@@ -1,3 +1,12 @@
+//! C ABI for the exath-engine expression evaluator.
+//!
+//! Everything is reached through one gateway: evaluate a string with
+//! [`exath_evaluate`] (one-shot) or a [`ExathSession`] via
+//! [`exath_session_eval`] / [`exath_session_eval_line`]. `eval_line` understands
+//! every form, numeric, symbolic and matrix. This surface mirrors the Rust crate
+//! and the WASM build. Strings returned by the API must be freed with
+//! [`exath_free_string`].
+
 use exath_engine::{
     AngleMode, CalcResult, Session, LineResult,
     evaluate_complex, is_valid,

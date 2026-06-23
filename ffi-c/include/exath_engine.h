@@ -60,7 +60,7 @@ void exath_free_string(char *ptr);
 
 /**
  * Evaluate an expression string.
- * Returns ExathResult — free error_msg with exath_free_string() if is_error == 1.
+ * Returns ExathResult, free error_msg with exath_free_string() if is_error == 1.
  */
 struct ExathResult exath_evaluate(const char *expr, enum ExathAngleMode angle_mode);
 
@@ -87,12 +87,12 @@ void exath_session_free(struct ExathSession *session);
 
 /**
  * Evaluate one line in a session (may be `var = expr` or a plain expression).
- * Returns ExathResult — free error_msg with exath_free_string() if is_error == 1.
+ * Returns ExathResult, free error_msg with exath_free_string() if is_error == 1.
  */
 struct ExathResult exath_session_eval(struct ExathSession *session, const char *line);
 
 /**
- * Evaluate one line, understanding every DSL form — symbolic (diff, simplify,
+ * Evaluate one line, understanding every DSL form, symbolic (diff, simplify,
  * factor, solve, integral, …), linear algebra (det, inv, eigenvalues, …) and
  * numeric forms (sum, product, deriv). See ExathLineResult for the result
  * convention. This is the single gateway for all operations.

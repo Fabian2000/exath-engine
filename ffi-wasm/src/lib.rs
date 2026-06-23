@@ -1,3 +1,10 @@
+//! WebAssembly bindings for the exath-engine expression evaluator.
+//!
+//! Everything is reached through one gateway: `evaluate(expr)` (one-shot) or an
+//! `ExathSession` via `.eval` / `.evalLine`. `evalLine` understands every form,
+//! numeric, symbolic and matrix, returning an `ExathLine` (value or expression).
+//! This surface mirrors the Rust crate and the C-FFI.
+
 use exath_engine::{
     AngleMode, CalcResult, Session, LineResult,
     evaluate_complex, is_valid, supported_functions,
