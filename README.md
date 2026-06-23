@@ -150,6 +150,36 @@ Four ways to evaluate, chosen by *stateful?* and *numeric-only or also symbolic?
   understands `diff` / `factor` / `solve` / matrix / … forms, returning an
   expression string for symbolic results. Use it whenever you want CAS.
 
+### Result types
+
+`CalcResult` is the numeric result of `evaluate` / `eval`:
+
+```rust
+enum CalcResult {
+    Real(f64),
+    Complex(f64, f64),   // (real, imaginary)
+}
+```
+
+`LineResult` is what `eval_line` returns:
+
+```rust
+enum LineResult {
+    Value(CalcResult),    // a number
+    Expression(String),   // a symbolic expression, e.g. "2 * x"
+}
+```
+
+Every surface represents these faithfully (the enum is flattened to `re`/`im`
+plus flags; `im == 0` means real):
+
+| Surface | Numeric | Line (incl. symbolic) |
+| --- | --- | --- |
+| Rust | `CalcResult` | `LineResult` |
+| C | `ExathResult { re, im, is_complex, is_error, error_msg }` | `ExathLineResult { is_expression, expression, re, im, is_complex, is_error, error_msg }` |
+| WASM | `ExathResult { re, im, isComplex, isError, errorMessage }` | `ExathLine { isExpression, expression, re, im, isComplex, isError, errorMessage }` |
+| Dart | `ExathResult { re, im, isComplex, isError }` | sealed `LineResult` = `NumberResult` \| `ExpressionResult` |
+
 ---
 
 ## Syntax reference

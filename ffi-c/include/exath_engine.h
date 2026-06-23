@@ -33,6 +33,10 @@ typedef struct ExathSession ExathSession;
 typedef struct ExathResult {
     double re;
     double im;
+    /**
+     * 1 if the result is complex (im != 0), else 0.
+     */
+    int32_t is_complex;
     int32_t is_error;
     char *error_msg;
 } ExathResult;
@@ -49,6 +53,10 @@ typedef struct ExathLineResult {
     char *expression;
     double re;
     double im;
+    /**
+     * 1 if the numeric value is complex (im != 0), else 0.
+     */
+    int32_t is_complex;
     int32_t is_error;
     char *error_msg;
 } ExathLineResult;

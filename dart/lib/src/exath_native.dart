@@ -13,6 +13,8 @@ final class _CResult extends Struct {
   @Double()
   external double im;
   @Int32()
+  external int isComplex;
+  @Int32()
   external int isError;
   external Pointer<Utf8> errorMsg;
 }
@@ -25,6 +27,8 @@ final class _CLineResult extends Struct {
   external double re;
   @Double()
   external double im;
+  @Int32()
+  external int isComplex;
   @Int32()
   external int isError;
   external Pointer<Utf8> errorMsg;

@@ -42,6 +42,8 @@ fn to_angle_mode(mode: &ExathAngleMode) -> AngleMode {
 pub struct ExathResult {
     pub re: f64,
     pub im: f64,
+    /// 1 if the result is complex (im != 0), else 0.
+    pub is_complex: i32,
     pub is_error: i32,
     pub error_msg: *mut c_char,
 }
@@ -50,6 +52,7 @@ fn ok_result(re: f64, im: f64) -> ExathResult {
     ExathResult {
         re,
         im,
+        is_complex: if im != 0.0 { 1 } else { 0 },
         is_error: 0,
         error_msg: std::ptr::null_mut(),
     }
@@ -67,6 +70,7 @@ fn error_result(msg: &str) -> ExathResult {
     ExathResult {
         re: 0.0,
         im: 0.0,
+        is_complex: 0,
         is_error: 1,
         error_msg: c_msg.into_raw(),
     }
@@ -179,6 +183,8 @@ pub struct ExathLineResult {
     pub expression: *mut c_char,
     pub re: f64,
     pub im: f64,
+    /// 1 if the numeric value is complex (im != 0), else 0.
+    pub is_complex: i32,
     pub is_error: i32,
     pub error_msg: *mut c_char,
 }
@@ -189,6 +195,7 @@ fn line_value(re: f64, im: f64) -> ExathLineResult {
         expression: std::ptr::null_mut(),
         re,
         im,
+        is_complex: if im != 0.0 { 1 } else { 0 },
         is_error: 0,
         error_msg: std::ptr::null_mut(),
     }
@@ -202,6 +209,7 @@ fn line_error(msg: &str) -> ExathLineResult {
         expression: std::ptr::null_mut(),
         re: 0.0,
         im: 0.0,
+        is_complex: 0,
         is_error: 1,
         error_msg: c_msg.into_raw(),
     }
@@ -229,6 +237,7 @@ pub extern "C" fn exath_session_eval_line(
             expression: to_c_string(&s).into_raw(),
             re: 0.0,
             im: 0.0,
+            is_complex: 0,
             is_error: 0,
             error_msg: std::ptr::null_mut(),
         },

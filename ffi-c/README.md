@@ -75,6 +75,7 @@ enum ExathAngleMode { Deg = 0, Rad = 1, Grad = 2 };
 typedef struct {
     double   re;         // real part
     double   im;         // imaginary part
+    int32_t  is_complex; // 1 if im != 0, else 0
     int32_t  is_error;   // 0 = success, 1 = error
     char    *error_msg;  // null-terminated error string (NULL if no error)
 } ExathResult;
@@ -139,6 +140,7 @@ typedef struct {
     char    *expression;     // expression string (free with exath_free_string)
     double   re;             // numeric real part (when is_expression == 0)
     double   im;             // numeric imaginary part
+    int32_t  is_complex;     // 1 if im != 0, else 0
     int32_t  is_error;       // 1 = error in `error_msg`
     char    *error_msg;      // error string (free with exath_free_string)
 } ExathLineResult;
