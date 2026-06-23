@@ -63,6 +63,60 @@ jobs:
         with:
           files: ${{ matrix.artifact }}
 
+  android:
+    name: android jniLibs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-linux-android,armv7-linux-androideabi,x86_64-linux-android
+      - uses: nttld/setup-ndk@v1
+        id: ndk
+        with:
+          ndk-version: r26d
+      - name: Install cargo-ndk
+        run: cargo install cargo-ndk --locked
+      - name: Build jniLibs (arm64-v8a, armeabi-v7a, x86_64)
+        env:
+          ANDROID_NDK_HOME: ${{ steps.ndk.outputs.ndk-path }}
+        run: cargo ndk -t arm64-v8a -t armeabi-v7a -t x86_64 -o ./jniLibs build --release -p exath-engine-ffi
+      - name: Package jniLibs
+        run: tar -czf exath-engine-ffi-android-jniLibs.tar.gz jniLibs
+      - name: Attach to release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: exath-engine-ffi-android-jniLibs.tar.gz
+
+  ios:
+    name: ios xcframework
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-ios,aarch64-apple-ios-sim,x86_64-apple-ios
+      - name: Build static libs (device + simulator)
+        run: |
+          cargo build --release -p exath-engine-ffi --target aarch64-apple-ios
+          cargo build --release -p exath-engine-ffi --target aarch64-apple-ios-sim
+          cargo build --release -p exath-engine-ffi --target x86_64-apple-ios
+      - name: Assemble xcframework
+        run: |
+          lipo -create \
+            target/aarch64-apple-ios-sim/release/libexath_engine_ffi.a \
+            target/x86_64-apple-ios/release/libexath_engine_ffi.a \
+            -output libexath_engine_ffi-sim.a
+          xcodebuild -create-xcframework \
+            -library target/aarch64-apple-ios/release/libexath_engine_ffi.a \
+            -library libexath_engine_ffi-sim.a \
+            -output exath_engine_ffi.xcframework
+          zip -r exath-engine-ffi-ios-xcframework.zip exath_engine_ffi.xcframework
+      - name: Attach to release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: exath-engine-ffi-ios-xcframework.zip
+
   wasm:
     name: wasm bundle
     runs-on: ubuntu-latest
