@@ -1,8 +1,6 @@
 use exath_engine::{
-    AngleMode, CalcResult, Session,
+    AngleMode, CalcResult, Session, LineResult,
     evaluate_complex, is_valid, supported_functions,
-    deriv, integrate, sum, prod,
-    differentiate, simplify_expr,
 };
 use wasm_bindgen::prelude::*;
 
@@ -110,86 +108,6 @@ pub fn js_supported_functions() -> Vec<JsValue> {
         .collect()
 }
 
-// ── Numerical methods ─────────────────────────────────────────────────────────
-
-/// Numerically differentiate expr w.r.t. var at x.
-/// Returns ExathResult with `.re` as the derivative (always real), or `.isError`.
-#[wasm_bindgen]
-pub fn deriv_at(expr: &str, var: &str, x: f64, angle_mode: &str) -> ExathResult {
-    match deriv(expr, var, x, parse_angle_mode(angle_mode)) {
-        Ok(value) => ExathResult {
-            re: value,
-            im: 0.0,
-            is_complex: false,
-            error: None,
-        },
-        Err(err) => ExathResult {
-            re: 0.0,
-            im: 0.0,
-            is_complex: false,
-            error: Some(err.to_string()),
-        },
-    }
-}
-
-/// Numerically integrate expr w.r.t. var from a to b.
-/// Returns ExathResult with `.re` as the integral (always real), or `.isError`.
-#[wasm_bindgen]
-pub fn integrate_range(expr: &str, var: &str, a: f64, b: f64, angle_mode: &str) -> ExathResult {
-    match integrate(expr, var, a, b, parse_angle_mode(angle_mode)) {
-        Ok(value) => ExathResult {
-            re: value,
-            im: 0.0,
-            is_complex: false,
-            error: None,
-        },
-        Err(err) => ExathResult {
-            re: 0.0,
-            im: 0.0,
-            is_complex: false,
-            error: Some(err.to_string()),
-        },
-    }
-}
-
-/// Compute Σ expr for var = from to to (inclusive).
-#[wasm_bindgen]
-pub fn sum_range(expr: &str, var: &str, from: i32, to: i32, angle_mode: &str) -> ExathResult {
-    match sum(expr, var, from as i64, to as i64, parse_angle_mode(angle_mode)) {
-        Ok(value) => ExathResult {
-            re: value,
-            im: 0.0,
-            is_complex: false,
-            error: None,
-        },
-        Err(err) => ExathResult {
-            re: 0.0,
-            im: 0.0,
-            is_complex: false,
-            error: Some(err.to_string()),
-        },
-    }
-}
-
-/// Compute Π expr for var = from to to (inclusive).
-#[wasm_bindgen]
-pub fn prod_range(expr: &str, var: &str, from: i32, to: i32, angle_mode: &str) -> ExathResult {
-    match prod(expr, var, from as i64, to as i64, parse_angle_mode(angle_mode)) {
-        Ok(value) => ExathResult {
-            re: value,
-            im: 0.0,
-            is_complex: false,
-            error: None,
-        },
-        Err(err) => ExathResult {
-            re: 0.0,
-            im: 0.0,
-            is_complex: false,
-            error: Some(err.to_string()),
-        },
-    }
-}
-
 // ── Session ───────────────────────────────────────────────────────────────────
 
 /// A stateful session that persists variables between eval calls.
@@ -217,6 +135,21 @@ impl ExathSession {
     /// Evaluate one line (may be `var = expr` or a plain expression).
     pub fn eval(&mut self, line: &str) -> ExathResult {
         calc_to_result(self.inner.eval(line))
+    }
+
+    /// Evaluate one line, also understanding every DSL form — symbolic (diff,
+    /// simplify, factor, solve, integral, …), linear algebra (det, inv,
+    /// eigenvalues, …) and numeric forms (sum, product, deriv). Returns an
+    /// `ExathLine`: `.isExpression` is true for symbolic results (read
+    /// `.expression`), otherwise read `.re`/`.im`.
+    #[wasm_bindgen(js_name = evalLine)]
+    pub fn eval_line(&mut self, line: &str) -> ExathLine {
+        match self.inner.eval_line(line) {
+            Ok(LineResult::Value(CalcResult::Real(re))) => ExathLine::from_value(re, 0.0),
+            Ok(LineResult::Value(CalcResult::Complex(re, im))) => ExathLine::from_value(re, im),
+            Ok(LineResult::Expression(s)) => ExathLine::from_expression(s),
+            Err(e) => ExathLine::from_error(e.to_string()),
+        }
     }
 
     /// Set a variable (im = 0.0 for real values).
@@ -264,18 +197,69 @@ impl ExathSession {
     }
 }
 
-// ── Symbolic ──────────────────────────────────────────────────────────────────
+// ── ExathLine (result of ExathSession.evalLine) ───────────────────────────────
 
-/// Symbolically differentiate `expr` w.r.t. `variable`, returning the simplified
-/// derivative as an expression string. Throws on parse errors or unsupported
-/// constructs (factorial, comparisons, multi-argument functions, …).
-#[wasm_bindgen(js_name = differentiate)]
-pub fn js_differentiate(expr: &str, variable: &str) -> Result<String, JsValue> {
-    differentiate(expr, variable).map_err(|e| JsValue::from_str(&e.to_string()))
+/// Result of `ExathSession.evalLine`: either a numeric value or a symbolic
+/// expression string (for symbolic forms like `diff` / `factor` / `solve`).
+#[wasm_bindgen]
+pub struct ExathLine {
+    is_expression: bool,
+    expression: String,
+    re: f64,
+    im: f64,
+    is_error: bool,
+    error_message: Option<String>,
 }
 
-/// Parse and algebraically simplify `expr`, returning the result as a string.
-#[wasm_bindgen(js_name = simplify)]
-pub fn js_simplify(expr: &str) -> Result<String, JsValue> {
-    simplify_expr(expr).map_err(|e| JsValue::from_str(&e.to_string()))
+impl ExathLine {
+    fn from_value(re: f64, im: f64) -> ExathLine {
+        ExathLine { is_expression: false, expression: String::new(), re, im, is_error: false, error_message: None }
+    }
+    fn from_expression(s: String) -> ExathLine {
+        ExathLine { is_expression: true, expression: s, re: 0.0, im: 0.0, is_error: false, error_message: None }
+    }
+    fn from_error(msg: String) -> ExathLine {
+        ExathLine { is_expression: false, expression: String::new(), re: 0.0, im: 0.0, is_error: true, error_message: Some(msg) }
+    }
 }
+
+#[wasm_bindgen]
+impl ExathLine {
+    /// True if the result is a symbolic expression (read `.expression`).
+    #[wasm_bindgen(getter, js_name = isExpression)]
+    pub fn is_expression(&self) -> bool {
+        self.is_expression
+    }
+
+    /// The symbolic expression string (empty for numeric results).
+    #[wasm_bindgen(getter)]
+    pub fn expression(&self) -> String {
+        self.expression.clone()
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn re(&self) -> f64 {
+        self.re
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn im(&self) -> f64 {
+        self.im
+    }
+
+    #[wasm_bindgen(getter, js_name = isComplex)]
+    pub fn is_complex(&self) -> bool {
+        self.im != 0.0
+    }
+
+    #[wasm_bindgen(getter, js_name = isError)]
+    pub fn is_error(&self) -> bool {
+        self.is_error
+    }
+
+    #[wasm_bindgen(getter, js_name = errorMessage)]
+    pub fn error_message(&self) -> Option<String> {
+        self.error_message.clone()
+    }
+}
+

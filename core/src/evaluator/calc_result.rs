@@ -1,6 +1,6 @@
 use super::cx::Cx;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum CalcResult {
     Real(f64),
     Complex(f64, f64),

@@ -32,8 +32,12 @@ engine/
 - **Rich function set** — trig, inverse trig, hyperbolic, inverse hyperbolic, exp/log, rounding, complex parts, and more
 - **Multi-argument functions** — `if(cond, a, b)`, `min(...)`, `max(...)`, `clamp(x, lo, hi)`, `gcd(a, b)`, `lcm(a, b)`
 - **Comparison & logic operators** — `>`, `<`, `>=`, `<=`, `==`, `!=`, `&&`, `||`, `!`
-- **Numerical methods** — derivative, integral, sum, product
-- **Symbolic differentiation** — `differentiate(expr, var)` returns the simplified derivative as an expression
+- **One eval gateway** — every operation (numeric, symbolic, matrix, units) is
+  invoked by evaluating a string: `evaluate(expr)` or `Session::eval` /
+  `Session::eval_line`. The Rust crate, C-FFI and WASM expose exactly this
+  gateway, so all three are identical
+- **Computer algebra** — `diff`, `simplify`, `expand`, `factor`, `solve`,
+  `integral`, `taylor`, `limit`, `laplace`, `dsolve`, … all as `eval_line` forms
 - **AST access** — parse to an inspectable tree for tooling
 - **Three targets** — Rust, C shared library (with auto-generated header), WebAssembly
 
@@ -122,7 +126,7 @@ console.log(s.fnNames());             // ["f", "g"]
 | Syntax | Example |
 | --- | --- |
 | Integer | `42` |
-| Decimal (dot or comma) | `3.14` or `3,14` |
+| Decimal (dot) | `3.14` |
 | Scientific notation | `6.022e23` |
 
 ### Constants
@@ -131,7 +135,9 @@ console.log(s.fnNames());             // ["f", "g"]
 | --- | --- |
 | `pi` or `π` | π ≈ 3.14159… |
 | `e` | e ≈ 2.71828… |
-| `phi` or `φ` | φ ≈ 1.61803… |
+| `phi` or `φ` | φ ≈ 1.61803… (golden ratio) |
+| `epsilon` or `ε` | Euler's number e (alias) |
+| `i` | imaginary unit, i² = −1 |
 
 ### Operators
 
@@ -142,6 +148,9 @@ console.log(s.fnNames());             // ["f", "g"]
 | `%` or `mod` | Modulo (real only) |
 | `==` `!=` `<` `<=` `>` `>=` | Comparison → `1.0` or `0.0` (real only) |
 | `&&` `\|\|` `!` | Logical AND / OR / NOT |
+| `!` (postfix) | Factorial, e.g. `5!` = 120 (real only) |
+| `\|x\|` | Absolute value / modulus, e.g. `\|-3\|` = 3 |
+| `( … )` | Grouping |
 
 > **Note on complex numbers and comparisons:** Ordering operators (`<`, `<=`, `>`, `>=`) are only defined for real numbers and return an error for complex values. `==` / `!=` compare both real and imaginary parts within a tolerance of 1e-12.
 
@@ -216,6 +225,7 @@ Implicit multiplication is supported: `2pi`, `3(x+1)`, `2sqrt(x)`.
 | Function | Description |
 | --- | --- |
 | `if(cond, true_val, false_val)` | Conditional — only the chosen branch is evaluated |
+| `piecewise(c1, v1, c2, v2, …, default)` | First true condition wins; e.g. `piecewise(x<0, -x, x)` = \|x\| |
 | `min(a, b, ...)` | Minimum of any number of real arguments |
 | `max(a, b, ...)` | Maximum of any number of real arguments |
 | `clamp(x, lo, hi)` | Clamp x to the range [lo, hi] |
@@ -224,6 +234,40 @@ Implicit multiplication is supported: `2pi`, `3(x+1)`, `2sqrt(x)`.
 
 > `gcd` and `lcm` require arguments that are mathematically integral: `|x − round(x)| < 1e-9`.
 > This tolerates typical floating-point rounding, e.g. `gcd(9.0, 6.0)` → 3.
+
+#### Special functions
+
+| Function | Description |
+| --- | --- |
+| `gamma(x)` | Gamma function Γ(x) (Lanczos) |
+| `lgamma(x)` | Natural log of \|Γ(x)\| |
+| `digamma(x)` | Digamma ψ(x) = Γ'(x)/Γ(x) |
+| `beta(a, b)` | Beta B(a,b) = Γ(a)Γ(b)/Γ(a+b) |
+| `erf(x)` `erfc(x)` | Error function and its complement |
+
+#### Statistics & distributions
+
+| Function | Description |
+| --- | --- |
+| `mean(a, b, …)` | Arithmetic mean |
+| `median(a, b, …)` | Median |
+| `variance(a, b, …)` | Population variance |
+| `stddev(a, b, …)` | Population standard deviation |
+| `npdf(x, mu, sigma)` | Normal probability density |
+| `ncdf(x, mu, sigma)` | Normal cumulative distribution |
+| `binom(n, k)` | Binomial coefficient (n choose k) |
+
+#### Number theory
+
+Integer arguments (within i64/i128 range).
+
+| Function | Description |
+| --- | --- |
+| `isprime(n)` | 1 if n is prime, else 0 |
+| `nextprime(n)` | Smallest prime greater than n |
+| `totient(n)` | Euler's totient φ(n) |
+| `powmod(a, b, m)` | Modular exponentiation aᵇ mod m |
+| `factorint(n)` | Prime factorisation, e.g. `factorint(360)` → `2^3 * 3^2 * 5` |
 
 ---
 
@@ -244,6 +288,18 @@ y = x^2 + 1    → 26
 x = -3
 result = if(x >= 0, sqrt(x), abs(x))   → 3
 ```
+
+**Numeric vs symbolic** — `eval` returns a number; `eval_line` additionally
+understands symbolic forms (`diff`, `factor`, `solve`, …) and returns an
+expression string for them. A symbolic result can be bound to a name and reused:
+
+```text
+g = diff(x^2, x)   → 2 * x        (symbolic variable)
+g + 1              → 2 * x + 1
+```
+
+**Introspection** — `is_valid(expr)` returns whether an expression parses;
+`supported_functions()` lists every built-in name.
 
 **C API**:
 
@@ -308,38 +364,110 @@ s.removeFn("f");
 
 ---
 
-## Numerical methods
+---
 
-These operate on single-variable real-valued expressions.
+## Numeric & data forms
 
-### Derivative
+`eval` / `eval_line` forms that return a number:
 
-```rust
-// f'(x) at x=1.0 using central finite difference
-// Step size h = max(|x| * 1e-7, 1e-10) for relative scaling
-let d = deriv("x^3 + 2*x", "x", 1.0, AngleMode::Rad)?;  // → 5.0
+| Form | Description |
+| --- | --- |
+| `sum(expr, var, a, b)` | Σ expr for var = a…b (integer steps) |
+| `product(expr, var, a, b)` | Π expr for var = a…b |
+| `deriv(expr, var, x0)` | Numeric derivative at x0 (central difference) |
+| `integral(expr, var, a, b)` | Definite integral (exact if possible, else adaptive Simpson) |
+| `convert(value, from, to)` | Unit conversion, units as names |
+
+```text
+sum(k^2, k, 1, 5)           → 55
+product(k, k, 1, 5)         → 120
+deriv(x^3, x, 2)            → 12
+integral(sin(x), x, 0, pi)  → 2
+convert(5, km, m)           → 5000
 ```
 
-### Integral
+Range limit for `sum`/`product`: 10,000,000 terms.
 
-```rust
-// ∫₀^π sin(x) dx  (composite Simpson's rule, n=1000 fixed intervals)
-let i = integrate("sin(x)", "x", 0.0, std::f64::consts::PI, AngleMode::Rad)?;  // → 2.0
+---
+
+## Linear algebra
+
+Matrix literals are `[[…], […]]` (rows); commas separate elements.
+
+| Form | Description |
+| --- | --- |
+| `det(M)` | Determinant |
+| `inv(M)` | Inverse |
+| `transpose(M)` | Transpose |
+| `trace(M)` | Trace |
+| `rank(M)` | Rank |
+| `norm(M)` | Frobenius norm |
+| `identity(n)` | n×n identity matrix |
+| `linsolve(A, b)` | Solve A·x = b |
+| `eigenvalues(M)` | Eigenvalues (symmetric → Jacobi) |
+| `eigenvectors(M)` | Eigenvectors (symmetric → orthonormal) |
+| `svdvals(M)` | Singular values (descending) |
+| `charpoly(M, x)` | Characteristic polynomial in `x` |
+
+```text
+det([[1,2],[3,4]])              → -2
+inv([[2,0],[0,2]])              → [[0.5, 0], [0, 0.5]]
+linsolve([[2,0],[0,2]], [4,6])  → [[2], [3]]
+eigenvalues([[2,1],[1,2]])      → 1, 3
 ```
 
-The step count (n=1000) is fixed; for high-accuracy work on rapidly oscillating functions consider subdividing the interval manually.
+---
 
-### Sum / Product
+## Computer algebra
 
-```rust
-// Σ k² for k = 1..5
-let s = sum("k^2", "k", 1, 5, AngleMode::Rad)?;   // → 55.0
+Symbolic operations are `eval_line` forms returning an expression string.
 
-// Π k for k = 1..5  (= 5!)
-let p = prod("k", "k", 1, 5, AngleMode::Rad)?;    // → 120.0
+| Form | Description |
+| --- | --- |
+| `diff(expr, var)` | Derivative |
+| `simplify(expr)` | Canonical simplification + identities |
+| `expand(expr)` | Expand products and powers |
+| `factor(expr, var)` | Factor a polynomial |
+| `polygcd(p, q, var)` | Polynomial GCD |
+| `solve(eq, var)` | Solve (exact for polynomials, verified numeric for transcendental) |
+| `nsolve(expr, var, x0)` | Newton's method from initial guess x0 |
+| `integral(expr, var)` | Indefinite integral (rules + verified u-substitution + partial fractions) |
+| `taylor(expr, var, x0, order)` | Taylor polynomial about x0 |
+| `limit(expr, var, x0)` | Limit (L'Hôpital, including ±∞) |
+| `sumc(expr, k, n)` | Closed-form Σ (Faulhaber) as a polynomial in n |
+| `laplace(expr, t, s)` | Laplace transform |
+| `dsolve([a_n, …, a_0], var)` | Linear constant-coefficient ODE |
+| `assume(x > 0)` | Sign assumption consulted by `simplify` |
+
+```text
+diff(sin(x^2), x)          → 2 * x * cos(x^2)
+factor(x^2 - 1, x)         → (x + 1) * (x - 1)
+solve(x^2 - 4, x)          → x = 2, x = -2
+integral(2*x*cos(x^2), x)  → sin(x^2)
+limit(sin(x)/x, x, 0)      → 1
+dsolve([1,3,2], x)         → C1 * exp(-2*x) + C2 * exp(-x)
+assume(x > 0); simplify(sqrt(x^2))  → x
 ```
 
-Maximum range: 10,000,000 terms.
+The simplifier produces a canonical polynomial normal form (collects like terms, expands products, merges powers, folds numeric constants like `sin(0)`, `cos(pi)`, `4!`) and applies identities: Pythagorean `sin²+cos²=1`, hyperbolic `cosh²−sinh²=1`, reciprocal-trig canonicalisation, inverse pairs `exp(ln x)=x`, exp laws, and surds. Every integration / solving result is verified internally, so a returned answer is always correct.
+
+---
+
+## Multivariable calculus
+
+| Form | Description |
+| --- | --- |
+| `grad(expr, [x, y, …])` | Gradient (column vector of partials) |
+| `jacobian([f, g, …], [x, y, …])` | Jacobian matrix |
+| `hessian(expr, [x, y, …])` | Hessian matrix |
+| `odesolve(f, x, y, x0, y0, x1)` | Numeric ODE y' = f(x,y) via RK4, returns y(x1) |
+| `minimize(f, x, a, b)` / `maximize(f, x, a, b)` | 1-D optimisation on [a, b] (golden section) |
+
+```text
+grad(x^2 + y^2, [x, y])      → [[2 * x], [2 * y]]
+odesolve(y, x, y, 0, 1, 1)   → 2.718…   (y' = y, y(0) = 1)
+minimize((x - 3)^2, x, 0, 10) → 3
+```
 
 ---
 
@@ -414,7 +542,7 @@ Designed for deterministic evaluation, not symbolic algebra or high-throughput b
 
 - **Parsing** is O(n) in expression length (single-pass tokenizer + recursive descent parser)
 - **Evaluation** is O(depth of AST) for expression evaluation
-- **Numerical methods** are O(n) in interval/range size: `deriv` uses 2 evaluations, `integrate` uses 1002 evaluations (fixed n=1000 Simpson), `sum`/`prod` evaluate once per integer step
+- **Numeric range forms** are O(n) in interval/range size: `deriv` uses 2 evaluations, definite `integral` uses an adaptive Simpson rule, `sum`/`product` evaluate once per integer step
 - **No global state** — each `Session` is an independent value; safe to use concurrently from multiple threads as long as each thread owns its own `Session`
 
 ---
@@ -449,3 +577,27 @@ Error categories:
 `ExathError` implements `std::error::Error` and `Display`.
 
 At the C and JavaScript boundaries, errors are stringified: check `result.is_error == 1` / `result.isError` and read `result.error_msg` / `result.errorMessage`.
+
+## Numerical accuracy & exactness
+
+exath is an embeddable, multi-language engine, so its external number type is
+`f64`/`double` (identical across Rust/C/WASM/...). What that means in practice:
+
+- **Exact where it counts, f64 elsewhere.** Symbolic coefficients use exact
+  rationals (`i128`-based); `1/3 + 1/3 = 2/3`, `∫x² dx = x³/3`. If a rational
+  numerator/denominator would overflow `i128`, it degrades gracefully to `f64`
+  (loses exactness, never panics). There is no arbitrary precision (BigInt) — a
+  deliberate trade-off for the universal cross-language `f64` contract.
+- **Symbolic decisions use tolerances.** Constant folding, zero-tests and root
+  detection compare with small tolerances (~1e-9..1e-12). The differential test
+  suite (`tests/verification.rs`) checks that `simplify`/`factor` preserve value
+  at sample points; still, treat results near singularities with care.
+- **Numerical linear algebra.** Symmetric eigenproblems use the **Jacobi**
+  algorithm (accurate eigenvalues + orthonormal eigenvectors). Singular values
+  use **one-sided Jacobi SVD** (does not form `MᵀM`, so conditioning is
+  preserved). Non-symmetric eigenvalues fall back to the characteristic
+  polynomial + numeric roots (fine for small matrices; less robust for large or
+  ill-conditioned ones).
+- **Commas are separators:** the comma always separates arguments/elements; decimals use `.` only (`max(1, 2)`, `[1, 2, 3]`, `3.14`).
+- **Panic-free:** every operation returns `Result`; fuzzing 30k random inputs
+  never panics.

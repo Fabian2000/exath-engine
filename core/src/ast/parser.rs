@@ -207,6 +207,39 @@ fn parse_primary(tokens: &[Token], pos: &mut usize) -> Result<Ast, ExathError> {
             }
             Ok(inner)
         }
+        Token::LBracket => {
+            *pos += 1;
+            let mut elems = Vec::new();
+            if !matches!(tokens.get(*pos), Some(Token::RBracket)) {
+                elems.push(parse_expr(tokens, pos)?);
+                while matches!(tokens.get(*pos), Some(Token::Comma)) {
+                    *pos += 1;
+                    elems.push(parse_expr(tokens, pos)?);
+                }
+            }
+            if matches!(tokens.get(*pos), Some(Token::RBracket)) {
+                *pos += 1;
+            } else {
+                return Err(ExathError::parse("Missing ']'"));
+            }
+            // [[..],[..]] → 2-D matrix; [a, b, c] → single row vector.
+            let all_rows = !elems.is_empty()
+                && elems
+                    .iter()
+                    .all(|e| matches!(e, Ast::Matrix(rows) if rows.len() == 1));
+            if all_rows {
+                let rows = elems
+                    .into_iter()
+                    .map(|e| match e {
+                        Ast::Matrix(mut r) => r.remove(0),
+                        other => vec![other],
+                    })
+                    .collect();
+                Ok(Ast::Matrix(rows))
+            } else {
+                Ok(Ast::Matrix(vec![elems]))
+            }
+        }
         _ => Err(ExathError::parse("Unexpected token")),
     }
 }
@@ -234,6 +267,7 @@ fn is_function(name: &str) -> bool {
         "asinh" | "acosh" | "atanh" | "acoth" | "asech" | "acsch" |
         "ln" | "lg" | "log" | "exp" |
         "sqrt" | "cbrt" | "abs" |
+        "gamma" | "lgamma" | "erf" | "erfc" | "digamma" |
         "floor" | "ceil" | "round" | "trunc" | "frac" |
         "sign" | "sgn" | "arg" | "conj" | "real" | "imag" |
         "deg" | "rad" |

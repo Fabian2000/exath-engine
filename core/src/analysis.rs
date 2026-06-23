@@ -29,6 +29,9 @@ pub fn supported_functions() -> &'static [&'static str] {
         "sqrt", "cbrt",
         // Magnitude / complex parts
         "abs", "arg", "conj", "real", "imag",
+        "gamma", "lgamma", "erf", "erfc", "digamma", "beta",
+        "isprime", "nextprime", "totient", "powmod", "factorint",
+        "mean", "median", "variance", "stddev", "npdf", "ncdf", "binom",
         // Rounding
         "floor", "ceil", "round", "trunc", "frac",
         // Sign
@@ -36,7 +39,13 @@ pub fn supported_functions() -> &'static [&'static str] {
         // Angle conversion
         "deg", "rad",
         // Control flow / multi-argument
-        "if", "min", "max", "clamp", "gcd", "lcm",
+        "if", "piecewise", "min", "max", "clamp", "gcd", "lcm", "assume", "abs",
+        "sum", "product", "deriv", "convert",
+        // Symbolic / calculus forms (usable via a session, e.g. eval_line)
+        "diff", "simplify", "integral", "solve", "factor", "polygcd", "nsolve", "expand", "taylor", "limit",
+        "grad", "jacobian", "hessian", "odesolve", "minimize", "maximize", "sumc", "laplace", "dsolve",
+        // Matrix functions (used with [[..],[..]] literals via a session)
+        "det", "inv", "transpose", "trace", "rank", "norm", "svdvals", "charpoly", "identity", "linsolve", "eigenvalues", "eigenvectors",
     ]
 }
 

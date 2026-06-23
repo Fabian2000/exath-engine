@@ -36,4 +36,7 @@ pub enum Ast {
     Factorial(Box<Ast>),
     /// Function call with zero or more arguments: name(a, b, ...)
     Call(String, Vec<Ast>),
+    /// Matrix literal: rows of element expressions, e.g. `[[1,2],[3,4]]`.
+    /// Not valid in a scalar context — evaluated by the matrix layer only.
+    Matrix(Vec<Vec<Ast>>),
 }

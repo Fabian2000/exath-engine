@@ -83,22 +83,17 @@ s.removeFn("hyp");
 s.clearVars();
 ```
 
-## Numerical methods
+## Numeric forms (via evalLine)
+
+Numeric range forms and unit conversion are `evalLine` DSL forms — read `.re`:
 
 ```js
-import { deriv_at, integrate_range, sum_range, prod_range } from "./pkg/exath_engine_wasm.js";
-
-// Derivative: f'(x) at x=2 for f(x) = x^3
-deriv_at("x^3", "x", 2.0, "rad").re;  // 12
-
-// Integral: ∫₀^π sin(x) dx
-integrate_range("sin(x)", "x", 0, Math.PI, "rad").re;  // 2
-
-// Sum: Σ k² for k=1..5
-sum_range("k^2", "k", 1, 5, "rad").re;  // 55
-
-// Product: Π k for k=1..5
-prod_range("k", "k", 1, 5, "rad").re;  // 120
+const s = new ExathSession("rad");
+s.evalLine("deriv(x^3, x, 2)").re;          // 12   (numeric derivative)
+s.evalLine("integral(sin(x), x, 0, pi)").re;// 2    (definite integral)
+s.evalLine("sum(k^2, k, 1, 5)").re;         // 55
+s.evalLine("product(k, k, 1, 5)").re;       // 120
+s.evalLine("convert(5, km, m)").re;         // 5000
 ```
 
 ## API reference
@@ -119,20 +114,20 @@ Every function returns an `ExathResult` object:
 
 | Function | Description |
 | --- | --- |
-| `evaluate(expr, angleMode)` | Evaluate an expression |
+| `evaluate(expr, angleMode)` | Evaluate an expression (numeric, returns `ExathResult`) |
 | `isValid(expr)` | Check if expression parses |
 | `supportedFunctions()` | Array of built-in function names |
-| `deriv_at(expr, var, x, mode)` | Numerical derivative |
-| `integrate_range(expr, var, a, b, mode)` | Definite integral |
-| `sum_range(expr, var, from, to, mode)` | Summation |
-| `prod_range(expr, var, from, to, mode)` | Product |
+
+Everything else — symbolic, numeric range forms, matrix, units — goes through
+`ExathSession.evalLine` (see below). There are no per-operation functions.
 
 ### ExathSession
 
 | Method | Description |
 | --- | --- |
 | `new ExathSession(angleMode)` | Create session (`"rad"`, `"deg"`, `"grad"`) |
-| `.eval(line)` | Evaluate expression or assignment |
+| `.eval(line)` | Evaluate a line (numeric, returns `ExathResult`) |
+| `.evalLine(line)` | Evaluate a line incl. symbolic/matrix forms (returns `ExathLine`) |
 | `.setVar(name, re, im)` | Set variable (im=0 for real) |
 | `.removeVar(name)` | Remove a variable |
 | `.clearVars()` | Clear all variables |
@@ -144,17 +139,34 @@ Every function returns an `ExathResult` object:
 
 Pass as string: `"rad"` (default), `"deg"`, or `"grad"`. Case-insensitive.
 
-## Symbolic
+## The eval gateway — symbolic, matrix, numeric
+
+All symbolic and matrix operations go through `evalLine`. Symbolic results have
+`.isExpression === true` (read `.expression`); numeric results give `.re`/`.im`.
 
 ```js
-import { differentiate, simplify } from "./pkg/exath_engine_wasm.js";
+const s = new ExathSession("rad");
 
-differentiate("x^2", "x");          // "2 * x"
-differentiate("sin(x^2)", "x");     // "cos(x^2) * 2 * x"
-simplify("x + 0 + 1*x");            // "2 * x"  (where applicable)
+// Computer algebra
+s.evalLine("diff(sin(x^2), x)").expression;   // "2 * x * cos(x^2)"
+s.evalLine("simplify(x + 0 + 1*x)").expression; // "2 * x"
+s.evalLine("factor(x^2 - 1, x)").expression;  // "(x + 1) * (x - 1)"
+s.evalLine("solve(x^2 - 4, x)").expression;   // "x = 2, x = -2"
+s.evalLine("integral(x^2, x)").expression;    // "x^3 / 3"
+s.evalLine("limit(sin(x)/x, x, 0)").expression; // "1"
+s.evalLine("dsolve([1,3,2], x)").expression;  // "C1 * exp(-2*x) + C2 * exp(-x)"
+
+// Linear algebra
+s.evalLine("det([[1,2],[3,4]])").re;          // -2
+s.evalLine("eigenvalues([[2,1],[1,2]])").expression; // "1, 3"
+
+// Symbolic variables: bind a result, then substitute numerically
+s.evalLine("g = diff(x^3, x)");               // g = 3 * x^2
+s.evalLine("x = 2");
+s.evalLine("g").re;                            // 12
 ```
 
-`differentiate(expr, variable)` returns the simplified derivative as an
-expression string and throws on parse errors or unsupported constructs
-(factorial, comparisons, multi-argument functions). Symbolic calculus is
-radian-based, independent of the evaluation angle mode.
+`evalLine(line)` returns an `ExathLine`: read `.expression` when
+`.isExpression` is true, otherwise `.re`/`.im` (or `.isError`/`.errorMessage`).
+This surface is identical to the Rust crate and the C-FFI. See the main
+[README](../README.md) for the full DSL reference.

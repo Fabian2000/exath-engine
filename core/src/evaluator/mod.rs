@@ -8,7 +8,7 @@ pub use cx::Cx;
 pub use calc_result::CalcResult;
 pub use factorial::factorial;
 pub use functions::apply_function;
-pub use session::Session;
+pub use session::{Session, LineResult};
 
 use crate::angle_mode::AngleMode;
 use crate::ast::{eval_ast, UserFns};

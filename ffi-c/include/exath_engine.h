@@ -38,6 +38,22 @@ typedef struct ExathResult {
 } ExathResult;
 
 /**
+ * Result of exath_session_eval_line.
+ * If is_error == 1: error_msg holds the message (free with exath_free_string).
+ * Else if is_expression == 1: expression holds a symbolic expression string
+ *   (free with exath_free_string); re/im are 0.
+ * Else: re/im hold the numeric value and expression is NULL.
+ */
+typedef struct ExathLineResult {
+    int32_t is_expression;
+    char *expression;
+    double re;
+    double im;
+    int32_t is_error;
+    char *error_msg;
+} ExathLineResult;
+
+/**
  * Free an error_msg string returned by any exath function.
  */
 void exath_free_string(char *ptr);
@@ -60,41 +76,6 @@ int32_t exath_is_valid(const char *expr);
 char *exath_supported_functions(void);
 
 /**
- * Numerically differentiate expr w.r.t. var at x.
- */
-struct ExathResult exath_deriv(const char *expr,
-                               const char *var,
-                               double x,
-                               enum ExathAngleMode angle_mode);
-
-/**
- * Numerically integrate expr w.r.t. var from a to b.
- */
-struct ExathResult exath_integrate(const char *expr,
-                                   const char *var,
-                                   double a,
-                                   double b,
-                                   enum ExathAngleMode angle_mode);
-
-/**
- * Compute Σ expr for var = from to to (inclusive).
- */
-struct ExathResult exath_sum(const char *expr,
-                             const char *var,
-                             int64_t from,
-                             int64_t to,
-                             enum ExathAngleMode angle_mode);
-
-/**
- * Compute Π expr for var = from to to (inclusive).
- */
-struct ExathResult exath_prod(const char *expr,
-                              const char *var,
-                              int64_t from,
-                              int64_t to,
-                              enum ExathAngleMode angle_mode);
-
-/**
  * Create a new session.
  */
 struct ExathSession *exath_session_new(enum ExathAngleMode angle_mode);
@@ -109,6 +90,14 @@ void exath_session_free(struct ExathSession *session);
  * Returns ExathResult — free error_msg with exath_free_string() if is_error == 1.
  */
 struct ExathResult exath_session_eval(struct ExathSession *session, const char *line);
+
+/**
+ * Evaluate one line, understanding every DSL form — symbolic (diff, simplify,
+ * factor, solve, integral, …), linear algebra (det, inv, eigenvalues, …) and
+ * numeric forms (sum, product, deriv). See ExathLineResult for the result
+ * convention. This is the single gateway for all operations.
+ */
+struct ExathLineResult exath_session_eval_line(struct ExathSession *session, const char *line);
 
 /**
  * Set a variable in the session.  im = 0.0 for real values.
@@ -141,18 +130,5 @@ char *exath_session_fn_names(struct ExathSession *session);
  * Free the result with exath_free_string().
  */
 char *exath_session_var_names(struct ExathSession *session);
-
-/**
- * Symbolically differentiate `expr` w.r.t. `var`. Returns the simplified
- * derivative as a newly-allocated, NUL-terminated string (free with
- * exath_free_string). Returns NULL on parse error or unsupported construct.
- */
-char *exath_differentiate(const char *expr, const char *var);
-
-/**
- * Parse and algebraically simplify `expr`. Returns a newly-allocated string
- * (free with exath_free_string), or NULL on parse error.
- */
-char *exath_simplify(const char *expr);
 
 #endif  /* EXATH_ENGINE_H */

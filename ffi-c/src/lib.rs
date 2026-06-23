@@ -1,7 +1,6 @@
 use exath_engine::{
-    AngleMode, CalcResult, Session,
-    evaluate_complex, is_valid, deriv, integrate, sum, prod,
-    differentiate, simplify_expr,
+    AngleMode, CalcResult, Session, LineResult,
+    evaluate_complex, is_valid,
 };
 use std::ffi::{CStr, CString};
 use std::os::raw::c_char;
@@ -123,83 +122,6 @@ pub extern "C" fn exath_supported_functions() -> *mut c_char {
     to_c_string(&list).into_raw()
 }
 
-// ── Numerical methods ─────────────────────────────────────────────────────────
-
-/// Numerically differentiate expr w.r.t. var at x.
-#[no_mangle]
-pub extern "C" fn exath_deriv(
-    expr: *const c_char,
-    var: *const c_char,
-    x: f64,
-    angle_mode: ExathAngleMode,
-) -> ExathResult {
-    let (expr_str, var_str) = match (parse_cstr(expr), parse_cstr(var)) {
-        (Ok(expr_str), Ok(var_str)) => (expr_str, var_str),
-        _ => return error_result("Invalid UTF-8"),
-    };
-    match deriv(expr_str, var_str, x, to_angle_mode(&angle_mode)) {
-        Ok(value) => ok_result(value, 0.0),
-        Err(err) => error_result(&err.to_string()),
-    }
-}
-
-/// Numerically integrate expr w.r.t. var from a to b.
-#[no_mangle]
-pub extern "C" fn exath_integrate(
-    expr: *const c_char,
-    var: *const c_char,
-    a: f64,
-    b: f64,
-    angle_mode: ExathAngleMode,
-) -> ExathResult {
-    let (expr_str, var_str) = match (parse_cstr(expr), parse_cstr(var)) {
-        (Ok(expr_str), Ok(var_str)) => (expr_str, var_str),
-        _ => return error_result("Invalid UTF-8"),
-    };
-    match integrate(expr_str, var_str, a, b, to_angle_mode(&angle_mode)) {
-        Ok(value) => ok_result(value, 0.0),
-        Err(err) => error_result(&err.to_string()),
-    }
-}
-
-/// Compute Σ expr for var = from to to (inclusive).
-#[no_mangle]
-pub extern "C" fn exath_sum(
-    expr: *const c_char,
-    var: *const c_char,
-    from: i64,
-    to: i64,
-    angle_mode: ExathAngleMode,
-) -> ExathResult {
-    let (expr_str, var_str) = match (parse_cstr(expr), parse_cstr(var)) {
-        (Ok(expr_str), Ok(var_str)) => (expr_str, var_str),
-        _ => return error_result("Invalid UTF-8"),
-    };
-    match sum(expr_str, var_str, from, to, to_angle_mode(&angle_mode)) {
-        Ok(value) => ok_result(value, 0.0),
-        Err(err) => error_result(&err.to_string()),
-    }
-}
-
-/// Compute Π expr for var = from to to (inclusive).
-#[no_mangle]
-pub extern "C" fn exath_prod(
-    expr: *const c_char,
-    var: *const c_char,
-    from: i64,
-    to: i64,
-    angle_mode: ExathAngleMode,
-) -> ExathResult {
-    let (expr_str, var_str) = match (parse_cstr(expr), parse_cstr(var)) {
-        (Ok(expr_str), Ok(var_str)) => (expr_str, var_str),
-        _ => return error_result("Invalid UTF-8"),
-    };
-    match prod(expr_str, var_str, from, to, to_angle_mode(&angle_mode)) {
-        Ok(value) => ok_result(value, 0.0),
-        Err(err) => error_result(&err.to_string()),
-    }
-}
-
 // ── Session ───────────────────────────────────────────────────────────────────
 
 /// Opaque session handle.  Allocate with exath_session_new(), free with exath_session_free().
@@ -235,6 +157,74 @@ pub extern "C" fn exath_session_eval(
     };
     let inner = unsafe { &mut (*session).0 };
     calc_to_result(inner.eval(line_str))
+}
+
+/// Result of exath_session_eval_line.
+/// If is_error == 1: error_msg holds the message (free with exath_free_string).
+/// Else if is_expression == 1: expression holds a symbolic expression string
+///   (free with exath_free_string); re/im are 0.
+/// Else: re/im hold the numeric value and expression is NULL.
+#[repr(C)]
+pub struct ExathLineResult {
+    pub is_expression: i32,
+    pub expression: *mut c_char,
+    pub re: f64,
+    pub im: f64,
+    pub is_error: i32,
+    pub error_msg: *mut c_char,
+}
+
+fn line_value(re: f64, im: f64) -> ExathLineResult {
+    ExathLineResult {
+        is_expression: 0,
+        expression: std::ptr::null_mut(),
+        re,
+        im,
+        is_error: 0,
+        error_msg: std::ptr::null_mut(),
+    }
+}
+
+fn line_error(msg: &str) -> ExathLineResult {
+    let c_msg = CString::new(msg.replace('\0', ""))
+        .unwrap_or_else(|_| CString::new("Unknown error").expect("static literal"));
+    ExathLineResult {
+        is_expression: 0,
+        expression: std::ptr::null_mut(),
+        re: 0.0,
+        im: 0.0,
+        is_error: 1,
+        error_msg: c_msg.into_raw(),
+    }
+}
+
+/// Evaluate one line, understanding every DSL form — symbolic (diff, simplify,
+/// factor, solve, integral, …), linear algebra (det, inv, eigenvalues, …) and
+/// numeric forms (sum, product, deriv). See ExathLineResult for the result
+/// convention. This is the single gateway for all operations.
+#[no_mangle]
+pub extern "C" fn exath_session_eval_line(
+    session: *mut ExathSession,
+    line: *const c_char,
+) -> ExathLineResult {
+    let line_str = match parse_cstr(line) {
+        Ok(str) => str,
+        Err(err) => return line_error(&err),
+    };
+    let inner = unsafe { &mut (*session).0 };
+    match inner.eval_line(line_str) {
+        Ok(LineResult::Value(CalcResult::Real(re))) => line_value(re, 0.0),
+        Ok(LineResult::Value(CalcResult::Complex(re, im))) => line_value(re, im),
+        Ok(LineResult::Expression(s)) => ExathLineResult {
+            is_expression: 1,
+            expression: to_c_string(&s).into_raw(),
+            re: 0.0,
+            im: 0.0,
+            is_error: 0,
+            error_msg: std::ptr::null_mut(),
+        },
+        Err(e) => line_error(&e.to_string()),
+    }
 }
 
 /// Set a variable in the session.  im = 0.0 for real values.
@@ -300,40 +290,6 @@ pub extern "C" fn exath_session_fn_names(session: *mut ExathSession) -> *mut c_c
 pub extern "C" fn exath_session_var_names(session: *mut ExathSession) -> *mut c_char {
     let names = unsafe { (*session).0.var_names() };
     to_c_string(&names.join(",")).into_raw()
-}
-
-// ── Symbolic ──────────────────────────────────────────────────────────────────
-
-/// Symbolically differentiate `expr` w.r.t. `var`. Returns the simplified
-/// derivative as a newly-allocated, NUL-terminated string (free with
-/// exath_free_string). Returns NULL on parse error or unsupported construct.
-#[no_mangle]
-pub extern "C" fn exath_differentiate(
-    expr: *const c_char,
-    var: *const c_char,
-) -> *mut c_char {
-    let (expr_str, var_str) = match (parse_cstr(expr), parse_cstr(var)) {
-        (Ok(e), Ok(v)) => (e, v),
-        _ => return std::ptr::null_mut(),
-    };
-    match differentiate(expr_str, var_str) {
-        Ok(s) => to_c_string(&s).into_raw(),
-        Err(_) => std::ptr::null_mut(),
-    }
-}
-
-/// Parse and algebraically simplify `expr`. Returns a newly-allocated string
-/// (free with exath_free_string), or NULL on parse error.
-#[no_mangle]
-pub extern "C" fn exath_simplify(expr: *const c_char) -> *mut c_char {
-    let expr_str = match parse_cstr(expr) {
-        Ok(e) => e,
-        Err(_) => return std::ptr::null_mut(),
-    };
-    match simplify_expr(expr_str) {
-        Ok(s) => to_c_string(&s).into_raw(),
-        Err(_) => std::ptr::null_mut(),
-    }
 }
 
 // ── Internal helpers ──────────────────────────────────────────────────────────

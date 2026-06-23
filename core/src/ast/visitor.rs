@@ -26,6 +26,13 @@ fn collect_vars_rec(ast: &Ast, out: &mut Vec<String>) {
                 collect_vars_rec(arg, out);
             }
         }
+        Ast::Matrix(rows) => {
+            for row in rows {
+                for e in row {
+                    collect_vars_rec(e, out);
+                }
+            }
+        }
         Ast::Number(_) => {}
     }
 }

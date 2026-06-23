@@ -202,6 +202,108 @@ pub fn apply_function(name: &str, z: Cx, angle_mode: AngleMode) -> Result<Cx, Ex
             Ok(z.ln()?.mul(Cx::real(1.0 / base.ln())))
         }
 
+        // ── Special functions (real arguments) ───────────────────────────────
+        "gamma" => {
+            if !z.is_real() {
+                return Err(ExathError::arg_type("gamma only defined for real arguments"));
+            }
+            Ok(Cx::real(gamma(z.re)))
+        }
+        "lgamma" => {
+            if !z.is_real() || z.re <= 0.0 {
+                return Err(ExathError::domain("lgamma only defined for positive reals"));
+            }
+            Ok(Cx::real(gamma(z.re).abs().ln()))
+        }
+        "erf" => {
+            if !z.is_real() {
+                return Err(ExathError::arg_type("erf only defined for real arguments"));
+            }
+            Ok(Cx::real(erf(z.re)))
+        }
+        "erfc" => {
+            if !z.is_real() {
+                return Err(ExathError::arg_type("erfc only defined for real arguments"));
+            }
+            Ok(Cx::real(1.0 - erf(z.re)))
+        }
+        "digamma" => {
+            if !z.is_real() {
+                return Err(ExathError::arg_type("digamma only defined for real arguments"));
+            }
+            Ok(Cx::real(digamma(z.re)))
+        }
+
         _ => Err(ExathError::undefined(format!("Unknown function: {}", name))),
+    }
+}
+
+/// Γ(x) via the Lanczos approximation (g = 7), with reflection for x < 0.5.
+fn gamma(x: f64) -> f64 {
+    const G: f64 = 7.0;
+    const C: [f64; 9] = [
+        0.999_999_999_999_809_93,
+        676.520_368_121_885_1,
+        -1259.139_216_722_402_8,
+        771.323_428_777_653_13,
+        -176.615_029_162_140_6,
+        12.507_343_278_686_905,
+        -0.138_571_095_265_720_12,
+        9.984_369_578_019_572e-6,
+        1.505_632_735_149_311_6e-7,
+    ];
+    if x < 0.5 {
+        // Reflection: Γ(x) = π / (sin(πx) · Γ(1−x))
+        std::f64::consts::PI / ((std::f64::consts::PI * x).sin() * gamma(1.0 - x))
+    } else {
+        let x = x - 1.0;
+        let mut a = C[0];
+        let t = x + G + 0.5;
+        for (i, &c) in C.iter().enumerate().skip(1) {
+            a += c / (x + i as f64);
+        }
+        (2.0 * std::f64::consts::PI).sqrt() * t.powf(x + 0.5) * (-t).exp() * a
+    }
+}
+
+/// Digamma ψ(x) = Γ'(x)/Γ(x): recurrence up to x≥6 then asymptotic series.
+fn digamma(mut x: f64) -> f64 {
+    let mut result = 0.0;
+    while x < 6.0 {
+        result -= 1.0 / x;
+        x += 1.0;
+    }
+    let inv = 1.0 / x;
+    let inv2 = inv * inv;
+    result + x.ln() - 0.5 * inv
+        - inv2 * (1.0 / 12.0 - inv2 * (1.0 / 120.0 - inv2 / 252.0))
+}
+
+/// Error function erf(x) via Abramowitz–Stegun 7.1.26 (|error| ≤ 1.5e-7).
+fn erf(x: f64) -> f64 {
+    let sign = if x < 0.0 { -1.0 } else { 1.0 };
+    let x = x.abs();
+    let t = 1.0 / (1.0 + 0.327_591_1 * x);
+    let y = 1.0
+        - (((((1.061_405_429 * t - 1.453_152_027) * t) + 1.421_413_741) * t - 0.284_496_736) * t
+            + 0.254_829_592)
+            * t
+            * (-x * x).exp();
+    sign * y
+}
+
+#[cfg(test)]
+mod special_tests {
+    use super::*;
+
+    #[test]
+    fn gamma_and_erf() {
+        let r = |name: &str, x: f64| apply_function(name, Cx::real(x), AngleMode::Rad).unwrap().re;
+        assert!((r("gamma", 5.0) - 24.0).abs() < 1e-6); // Γ(5) = 4! = 24
+        assert!((r("gamma", 0.5) - std::f64::consts::PI.sqrt()).abs() < 1e-6); // Γ(½)=√π
+        assert!(r("erf", 0.0).abs() < 1e-9);
+        assert!((r("erf", 10.0) - 1.0).abs() < 1e-6);
+        assert!((r("erf", 0.5) - 0.5204998778).abs() < 1e-6);
+        assert!((r("erfc", 0.0) - 1.0).abs() < 1e-9);
     }
 }

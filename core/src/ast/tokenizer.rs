@@ -13,6 +13,9 @@ pub(crate) enum Token {
     Factorial,
     LParen,
     RParen,
+    LBracket,
+    RBracket,
+    Semicolon,
     Comma,
     EqEq,
     Ne,
@@ -73,6 +76,18 @@ pub(crate) fn tokenize(input: &str) -> Result<Vec<Token>, ExathError> {
             }
             ',' => {
                 tokens.push(Token::Comma);
+                pos += 1;
+            }
+            '[' => {
+                tokens.push(Token::LBracket);
+                pos += 1;
+            }
+            ']' => {
+                tokens.push(Token::RBracket);
+                pos += 1;
+            }
+            ';' => {
+                tokens.push(Token::Semicolon);
                 pos += 1;
             }
             '%' => {
@@ -203,19 +218,8 @@ pub(crate) fn tokenize(input: &str) -> Result<Vec<Token>, ExathError> {
                     num_str.push(chars[pos]);
                     pos += 1;
                 }
-                // Accept comma as decimal separator ONLY when immediately followed by digits
-                if pos < chars.len()
-                    && chars[pos] == ','
-                    && pos + 1 < chars.len()
-                    && chars[pos + 1].is_ascii_digit()
-                {
-                    num_str.push('.');
-                    pos += 1;
-                    while pos < chars.len() && chars[pos].is_ascii_digit() {
-                        num_str.push(chars[pos]);
-                        pos += 1;
-                    }
-                }
+                // Exath 2.0: the comma is purely a separator. Decimals use `.`
+                // only — so `,` is never folded into a number here.
                 let value: f64 = num_str
                     .parse()
                     .map_err(|_| ExathError::parse("Invalid number"))?;

@@ -45,9 +45,14 @@ int main(void) {
     ExathResult r3 = exath_session_eval(s, "f(5)");
     printf("f(5) = %f\n", r3.re);  // 26.000000
 
-    // Numerical derivative
-    ExathResult d = exath_deriv("x^3", "x", 2.0, Rad);
-    printf("d/dx x^3 at x=2 = %f\n", d.re);  // 12.000000
+    // Anything symbolic, numeric or matrix goes through eval_line as a string.
+    // Symbolic results come back as `expression`; numeric ones as re/im.
+    ExathLineResult d = exath_session_eval_line(s, "diff(x^3, x)");
+    printf("diff(x^3, x) = %s\n", d.expression);  // 3 * x^2
+    exath_free_string(d.expression);
+
+    ExathLineResult i = exath_session_eval_line(s, "integral(sin(x), x, 0, pi)");
+    printf("definite integral = %f\n", i.re);     // 2.000000
 
     exath_session_free(s);
     return 0;
@@ -83,27 +88,20 @@ typedef struct {
 | `exath_is_valid(expr)` | Returns 1 if expression parses, 0 otherwise |
 | `exath_supported_functions()` | Comma-separated list of built-in functions |
 
-### Numerical methods
-
-| Function | Description |
-| --- | --- |
-| `exath_deriv(expr, var, x, mode)` | f'(x) via central finite difference |
-| `exath_integrate(expr, var, a, b, mode)` | Definite integral via Simpson's rule |
-| `exath_sum(expr, var, from, to, mode)` | Summation over integer range |
-| `exath_prod(expr, var, from, to, mode)` | Product over integer range |
-
 ### Session
 
 | Function | Description |
 | --- | --- |
 | `exath_session_new(mode)` | Create a new session |
 | `exath_session_free(s)` | Free a session |
-| `exath_session_eval(s, line)` | Evaluate a line (expression or assignment) |
+| `exath_session_eval(s, line)` | Evaluate a line, returns `ExathResult` (numeric only) |
+| `exath_session_eval_line(s, line)` | Evaluate a line incl. symbolic/matrix forms, returns `ExathLineResult` |
 | `exath_session_set_var(s, name, re, im)` | Set a variable |
 | `exath_session_remove_var(s, name)` | Remove a variable |
 | `exath_session_clear_vars(s)` | Clear all variables |
 | `exath_session_remove_fn(s, name)` | Remove a user-defined function |
 | `exath_session_fn_names(s)` | Comma-separated list of defined functions |
+| `exath_session_var_names(s)` | Comma-separated list of variables |
 
 ### Memory
 
@@ -113,12 +111,37 @@ typedef struct {
 
 All `char *` returns (error messages, function lists) must be freed with `exath_free_string()`.
 
-## Symbolic
+## The eval gateway — everything via one call
 
-| Function | Description |
-| --- | --- |
-| `exath_differentiate(expr, var)` | Simplified symbolic derivative as a string (NULL on error) |
-| `exath_simplify(expr)` | Algebraically simplified expression as a string (NULL on error) |
+There are no per-operation functions. Every symbolic, numeric, matrix and unit
+operation is invoked by passing its string form to `exath_session_eval_line`.
+This is identical to the Rust crate and the WASM build.
 
-Both return a newly-allocated string — free it with `exath_free_string()`.
-Symbolic calculus is radian-based, independent of evaluation angle mode.
+```c
+ExathSession *s = exath_session_new(Rad);
+exath_session_eval_line(s, "diff(sin(x^2), x)");      // → "2 * x * cos(x^2)"
+exath_session_eval_line(s, "factor(x^2 - 1, x)");     // → "(x + 1) * (x - 1)"
+exath_session_eval_line(s, "solve(x^2 - 4, x)");      // → "x = 2, x = -2"
+exath_session_eval_line(s, "integral(x^2, x)");       // → "x^3 / 3"
+exath_session_eval_line(s, "det([[1,2],[3,4]])");     // → -2 (numeric)
+exath_session_eval_line(s, "dsolve([1,3,2], x)");     // → "C1 * exp(-2*x) + C2 * exp(-x)"
+exath_session_eval_line(s, "convert(5, km, m)");      // → 5000 (numeric)
+exath_session_free(s);
+```
+
+`ExathLineResult` convention: if `is_error` → read `error_msg`; else if
+`is_expression` → read `expression` (a string, free with `exath_free_string()`);
+else read `re`/`im` for a numeric result.
+
+```c
+typedef struct {
+    int32_t  is_expression;  // 1 = symbolic string result in `expression`
+    char    *expression;     // expression string (free with exath_free_string)
+    double   re;             // numeric real part (when is_expression == 0)
+    double   im;             // numeric imaginary part
+    int32_t  is_error;       // 1 = error in `error_msg`
+    char    *error_msg;      // error string (free with exath_free_string)
+} ExathLineResult;
+```
+
+See the main [README](../README.md) for the full DSL form reference.
