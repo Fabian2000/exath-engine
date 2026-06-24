@@ -70,10 +70,10 @@ Future<void> ensureInitialized() async {
   final script = web.HTMLScriptElement()
     ..type = 'module'
     ..text = '''
-import init, * as m from '$base/exath_engine_wasm.js';
-init('$base/exath_engine_wasm_bg.wasm')
-  .then(() => { globalThis.exath = m; })
-  .catch((e) => { globalThis.__exathError = String(e); })
+const base = new URL('$base/', document.baseURI);
+import(new URL('exath_engine_wasm.js', base).href)
+  .then(m => m.default(new URL('exath_engine_wasm_bg.wasm', base).href).then(() => { globalThis.exath = m; }))
+  .catch(e => { globalThis.__exathError = String(e); })
   .finally(() => window.dispatchEvent(new Event('exath:ready')));
 ''';
   web.document.head!.appendChild(script);

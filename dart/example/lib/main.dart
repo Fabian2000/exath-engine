@@ -1,7 +1,11 @@
 import 'package:exath_engine/exath_engine.dart';
 import 'package:flutter/material.dart';
 
-void main() => runApp(const ExathApp());
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await ensureInitialized(); // loads the WASM module on web; no-op elsewhere
+  runApp(const ExathApp());
+}
 
 class ExathApp extends StatelessWidget {
   const ExathApp({super.key});

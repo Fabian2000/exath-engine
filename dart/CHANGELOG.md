@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.1
+
+- Fix (web): the WASM module failed to load with "Failed to resolve module
+  specifier" because the import used a bare specifier. Now loaded via a dynamic
+  import() against an absolute URL (document.baseURI), so it works under any
+  base href.
+
 ## 1.0.0
 
 - First release of `exath_engine`: a Flutter plugin for the
